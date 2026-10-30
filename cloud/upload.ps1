@@ -15,10 +15,10 @@ $Build = Join-Path (Split-Path $Web) 'Packaged\Windows'
 $tar = "$env:SystemRoot\System32\tar.exe"
 $temp = New-Item -ItemType Directory -Force (Join-Path $env:TEMP 'archv3d-upload')
 
-# The program by path: PowerShell names are case-insensitive, so `gcloud` inside GCloud would call GCloud itself.
-$gcloudExe = (Get-Command gcloud.cmd -CommandType Application -ErrorAction Stop).Source
+# The program by path ($GCloudExe, config.ps1): PowerShell names are case-insensitive, so `gcloud` inside GCloud would
+# call GCloud itself.
 function GCloud {
-  & $gcloudExe @args 2>&1 | ForEach-Object { "$_" }
+  & $GCloudExe @args 2>&1 | ForEach-Object { "$_" }
   if ($LASTEXITCODE) { throw "gcloud $args failed ($LASTEXITCODE)" }
 }
 
