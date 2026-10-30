@@ -38,6 +38,13 @@ tasklist /fi "IMAGENAME eq Movie_Studio.exe" /nh | findstr /i "Movie_Studio.exe"
 rem The game isn't running, but a signalling server or tunnel may be left over (e.g. after a crash).
 call "%ROOT%stop_experience.bat" >nul
 
+rem On this PC: switch the on-demand cloud stream off first, since both would run the same Cloudflare tunnel.
+rem (Needs gcloud signed in; silently skipped where it isn't, and never on the VM itself.)
+if not defined CLOUD if exist "%ROOT%cloud\stream-off.ps1" (
+  echo Switching the cloud stream off while this PC streams...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%cloud\stream-off.ps1" >nul 2>&1
+)
+
 rem ICE servers for browsers and Unreal: Cloudflare TURN credentials if servers\turn.env exists, else STUN only.
 node "%ROOT%servers\turn_refresh.mjs"
 
