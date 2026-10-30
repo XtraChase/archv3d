@@ -55,9 +55,25 @@ const base64url = (data: ArrayBuffer | string) =>
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 
+/** The first complete {...} in the text, e.g. when the key file was pasted twice in a row. */
+function firstJsonObject(text: string) {
+  let depth = 0;
+  let inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+    } else if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return text.slice(0, i + 1);
+  }
+  return text;
+}
+
 /**
  * The key file's JSON as pasted into the dashboard. Forgives what pasting tends to add: surrounding whitespace or
- * quotes, a byte-order mark, or the file base64-encoded. On failure the log shows its shape, never its content.
+ * quotes, a byte-order mark, the file base64-encoded, or pasted twice. On failure the log shows its shape, never its content.
  */
 function parseServiceAccountKey(raw: string) {
   let text = raw.replace(/^﻿/, '').trim();
@@ -70,7 +86,7 @@ function parseServiceAccountKey(raw: string) {
     }
   }
   try {
-    const key = JSON.parse(text) as { client_email?: string; private_key?: string };
+    const key = JSON.parse(firstJsonObject(text)) as { client_email?: string; private_key?: string };
     if (key.client_email && key.private_key) return key as { client_email: string; private_key: string };
     throw new Error('missing client_email or private_key');
   } catch (error) {
