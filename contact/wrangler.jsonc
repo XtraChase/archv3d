@@ -6,6 +6,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
   "workers_dev": true,
+  // Logs in the dashboard (Workers > archv3d-contact > Observability), e.g. a failed send.
+  "observability": { "enabled": true },
   "send_email": [
     { "name": "CONTACT_EMAIL", "destination_address": "james.chase.richards@gmail.com" }
   ],

@@ -6,6 +6,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
   "workers_dev": true,
+  // Logs in the dashboard (Workers > archv3d-control > Observability), e.g. a failed Google API call.
+  "observability": { "enabled": true },
   "vars": {
     "GCP_PROJECT": "archv3d-stream",
     "GCP_ZONE": "us-central1-a",
