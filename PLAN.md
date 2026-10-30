@@ -397,3 +397,13 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     Card images grabbed from the stream video (1280x720 jpg): house = Front view, studio = start aerial.
   - Netcade zip rebuilt (landing page is its index.html) but NOT uploaded.
   - To go live: start_experience.bat (desktop shortcut "Start ArchViz Stream"); frontend/dist is already rebuilt.
+- 2026-10-30 BUG FIXES (user report), repackaged + VERIFIED locally:
+  - Weather did nothing in AsBuilt_WP: its Ultra_Dynamic_Weather has "Cloud Coverage - Manual Override" and "Fog - Manual Override"
+    = true, which pin those values against any preset. Controller SetWeather now clears every "* - Manual Override" bool on the
+    weather actor before Change Weather (logs "Weather: cleared ..."). Thunderstorm -> dark/fog/lightning, Clear Skies -> clear.
+    The level's starting look is unchanged (overrides only cleared on the first pick).
+  - Walk camera flew upward in Main's lobby: Main's UDS_Occlusion_Volume box (NODE_AddBoxComponent-0) BLOCKS Visibility (AsBuilt's
+    ignores it). A floor line trace starting inside a simple collider hits at its own start -> "floor" StepHeight above the feet ->
+    the walker climbed every frame. AArchVizWalkPawn::TraceFloor now ignores start-penetrating hits (remembered in
+    EnclosingComponents, logged once: "Walk: ignoring ..."). Lobby view now stable.
+    Still recommended: set that box's Visibility response to Ignore in Main (it also catches double-click focus/walk traces).
