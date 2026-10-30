@@ -11,6 +11,7 @@ import http from 'node:http';
 import net from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
+import { appendFile } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
@@ -51,7 +52,13 @@ const MAX_LAUNCHES = 5;
 const LAUNCH_WINDOW_MINUTES = 15;
 const PAUSE_MINUTES = 10;
 
-const log = (...parts) => console.log(new Date().toISOString(), ...parts);
+// --log_file (cloud VM): also append to a file, which cloud\run-stream.ps1 uploads for debugging.
+const LOG_FILE = arg('log_file', '');
+const log = (...parts) => {
+  const line = [new Date().toISOString(), ...parts].join(' ');
+  console.log(line);
+  if (LOG_FILE) appendFile(LOG_FILE, line + '\n', () => {});
+};
 
 // ---- Queue state ----------------------------------------------------------------------------
 

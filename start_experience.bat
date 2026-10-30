@@ -16,7 +16,7 @@ set WINDOWED=
 set CLOUD=
 for %%a in (%*) do (
   if /i "%%~a"=="windowed" set WINDOWED=--windowed
-  if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15
+  if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15 --log_file "%ROOT%servers\gateway.log"
 )
 set GAME=%ROOT%..\Packaged\Windows\Movie_Studio.exe
 set PLAYER_PORT=80
