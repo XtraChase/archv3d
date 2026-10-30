@@ -189,7 +189,8 @@ export default {
       }
       return reply({ error: 'Not found' }, 404, origin);
     } catch (error) {
-      console.error(error);
+      // The message on its own line: the dashboard's event list shows only stack traces for Error objects.
+      console.error(`${pathname} failed: ${(error as Error).message}`);
       return reply({ status: 'error', error: 'Could not reach the cloud machine.' }, 502, origin);
     }
   }
