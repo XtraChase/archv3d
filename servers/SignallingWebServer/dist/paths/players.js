@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
+/* eslint-disable @typescript-eslint/no-unsafe-call,
+                  @typescript-eslint/no-unsafe-member-access */
+function default_1(signallingServer) {
+    const operations = {
+        GET
+    };
+    function GET(req, res, _next) {
+        res.status(200).json(signallingServer.playerRegistry.listPlayers().map((player) => player.getPlayerInfo()));
+    }
+    GET.apiDoc = {
+        summary: 'Returns list of players',
+        operationId: 'getPlayers',
+        responses: {
+            200: {
+                description: 'List of player IDs',
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'array',
+                            items: {
+                                type: 'string'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+    return operations;
+}

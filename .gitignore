@@ -1,0 +1,10 @@
+# Secrets: Cloudflare TURN API token and the TURN credentials minted from it.
+servers/turn.env
+servers/peer_options.json
+
+# Dependencies, build output, logs
+node_modules/
+frontend/dist/
+logs/
+*.log
+frontend/*.zip
