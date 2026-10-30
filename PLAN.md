@@ -355,3 +355,19 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   Desk props (2,267) have bAffectDynamicIndirectLighting/bAffectDistanceFieldLighting=false (Lumen surface cache budget);
   DefaultEngine.ini r.LumenScene.SurfaceCache.AtlasSize=6144 (was default 4096, oversubscribed 7-11%).
   Needs File > Save All (MCP can't save WP external actors), then repackage to update archv3d.com.
+- 2026-10-30 ASSET OPTIMIZATION (for the streaming PC: Pixel Streaming sends video, so assets never reach the browser).
+  Audit: build used 196 of 1,857 textures, effective ~830 MB if fully resident (BigCompany 370, UDS 150, grass 120, Fab 100);
+  1,922 meshes, Datasmith already Nanite (1,881), the 17 BigCompany meshes were not and had no LODs
+  (SM_ArmchairA 12,295 tris x 467 = 5.7M tris, SM_Desk 0.8M).
+  Done (all non-destructive, source data kept, assets saved):
+  - Nanite ON for the 17 placed BigCompany meshes.
+  - MaxTextureSize on 54 textures: 4K -> 2K (furniture, Fab facade, grass/moss, terrain Voronoi, UDS snow/frost/DLWE noise),
+    furniture small props -> 1K (keyboard, phone, mug, desk plant, monitor, books, stationery), UDS Real_Stars 8K -> 4K;
+    T_PlantE_* NeverStream -> false. Full list with previous values: notes/texture_caps_20261030.txt.
+    Kept: UDS StaticClouds_A / clouds_diverse, Building T_Background.
+  Result: repackaged (3,661 pkgs) container 937 -> 908 MB despite adding the furniture; Main loads in 1.5 s; stream 1706x776 H264
+  30 fps, 0 dropped; no Lumen surface cache warning in game (atlas 6144 active).
+  OBSERVED (not caused by this pass as far as known, no earlier interior capture to compare): blotchy Lumen GI noise in the
+  unfurnished lobby at any time of day (interior lit only by bounce light). Fix options: interior ceiling lights, or raise Lumen
+  Final Gather / Scene Lighting quality in the PostProcessVolume.
+  Not touched: PCG trees (104,587 instanced PVE plants) - likely the largest remaining GPU cost; reduce density if FPS headroom needed.
