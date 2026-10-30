@@ -8,3 +8,4 @@ frontend/dist/
 logs/
 *.log
 frontend/*.zip
+.wrangler/

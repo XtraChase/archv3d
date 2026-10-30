@@ -12,6 +12,10 @@ whichever level the current visitor picked.
   `frontend/public/config.js`; card images in `frontend/public/levels/<id>.jpg`. To add a level: add it to
   `AArchVizPlayerController::Levels` (C++) and `MapsToCook`, give the map `ArchVizGameMode` and `AArchVizCameraPoint`
   hotspots, then list it in `config.js` with the same id.
+- `contact/` – the contact form backend: a Cloudflare Worker (`archv3d-contact`) that emails each message from the
+  home page's Contact dialog to Chase through Cloudflare Email Routing (`send_email` binding, sender
+  contact@archv3d.com, Reply-To the visitor). Deployed by Workers Builds from this repo (root directory `contact`);
+  needs Email Routing enabled on archv3d.com with the destination address verified. URL in `config.js` `contactUrl`.
 - `servers/gateway.mjs` – public entry point on port 80: one viewer at a time, a waiting line, session/idle limits,
   TURN credential refresh, and a watchdog that launches and restarts the packaged game.
 - `servers/SignallingWebServer`, `Signalling`, `Common` – Epic's Pixel Streaming signalling server (Wilbur, MIT,

@@ -1,0 +1,16 @@
+// Contact form backend for archv3d.com: a Worker that emails each submission to Chase via Cloudflare Email Routing.
+// Deployed by Cloudflare Workers Builds from this folder of the GitHub repo (root directory "contact").
+// Needs Email Routing enabled on archv3d.com with the destination address below verified.
+{
+  "name": "archv3d-contact",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "send_email": [
+    { "name": "CONTACT_EMAIL", "destination_address": "james.chase.richards@gmail.com" }
+  ],
+  "vars": {
+    // Sender on the Email Routing domain; replies go to the visitor (Reply-To).
+    "FROM_ADDRESS": "contact@archv3d.com"
+  }
+}
