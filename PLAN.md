@@ -340,3 +340,18 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   (C:\Program Files\GitHub CLI\gh.exe, logged in as XtraChase). Ignored: servers/turn.env, servers/peer_options.json,
   node_modules, frontend/dist, logs, the Netcade zip. servers/*/dist are force-added (their own .gitignores exclude dist)
   so a clone runs after `npm install`; after rebuilding them, `git add -f` again isn't needed (already tracked).
+- 2026-10-30 INTERIOR FURNISHING with /Game/BigCompanyArchViz (office prop pack; its demo map Maps_BigCompany not touched).
+  Revit placeholders swapped 1:1 at the same spots, then props added. All new actors are StaticMeshActors in outliner folder
+  Interior/{Chairs,Desks,Tables,Restrooms,Lounge,DeskProps}, labels AV_<Mesh>_NNNN (3,743 total).
+  Mapping: Chair-Task (467) -> SM_ArmchairA (yaw+180); Standing desk 1500x600 (465) -> SM_Desk scaled to footprint;
+  Desk 1830 (135) + Table 1830x762 (83) -> SM_OutDoorTable scaled; Sofa (10) -> SM_Sofa_A x0.75; Toilet (116) -> SM_ToiletUnitB
+  (pack toilet faces local +Y, so yaw+180, back face on the wall); Sink (96) -> SM_WashBasinB; Urinal (48) -> SM_StandToilet
+  (top matched to Revit top). Revit fixtures face local -Y (wall at +Y, found by traces); chairs face their desk (local -Y).
+  Desks (600) get MonitorWide facing the chair side + KeyboardA + MouseA; ~40% mug, 22% desk plant, 15% phone; sofa pairs get a
+  coffee table + floor plants; half the meeting tables get a PlantB centrepiece. Auditorium seats (1253) and lifts unchanged.
+  Revit originals (1,420) are NOT deleted: actor bHidden=true + StaticMeshComponent0 bVisible=false (collision left on; same footprint).
+  To revert: delete folder Interior, set those back (refs in the session scratchpad items.json, or select by label prefix
+  Furniture_/Plumbing_Fixtures_ in Datasmith).
+  Desk props (2,267) have bAffectDynamicIndirectLighting/bAffectDistanceFieldLighting=false (Lumen surface cache budget);
+  DefaultEngine.ini r.LumenScene.SurfaceCache.AtlasSize=6144 (was default 4096, oversubscribed 7-11%).
+  Needs File > Save All (MCP can't save WP external actors), then repackage to update archv3d.com.
