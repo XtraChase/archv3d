@@ -10,6 +10,9 @@ window.ARCHVIZ_CONFIG = {
     : 'wss://stream.archv3d.com',
   // Contact form endpoint: the archv3d-contact Worker (contact/ in the repo), which emails each message to Chase.
   contactUrl: 'https://archv3d-contact.james-chase-richards.workers.dev/',
+  // Wake/status service for the on-demand Google Cloud VM (control/ in the repo). Asked only when the stream can't be
+  // reached: says whether the VM is asleep (visitors can wake it), starting, or switched off.
+  controlUrl: 'https://archv3d-control.james-chase-richards.workers.dev/',
   // Largest stream the browser may request, as 'WIDTHxHEIGHT' (swapped for portrait screens).
   // Bigger windows are streamed at this size and upscaled. Override with ?maxres=1280x720.
   maxStreamResolution: '1920x1080',

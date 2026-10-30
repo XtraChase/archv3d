@@ -5,6 +5,7 @@
 //   anything else is the page itself, forwarded to the signalling server's web server.
 // Also refreshes the TURN credentials every day; the signalling server reloads peer_options.json when it changes.
 // With --game it launches the packaged game and restarts it when it crashes or stops streaming.
+// With --idle_shutdown_minutes (cloud VM only) it powers the machine off when nobody has used it for that long.
 // Run by start_experience.bat:  node servers/gateway.mjs --port 80 --upstream 8080 --game <exe> --streamer_port 8888
 import http from 'node:http';
 import net from 'node:net';
@@ -34,6 +35,10 @@ const WARNING_SECONDS = 60;
 // Time a called visitor has to connect before the turn passes to the next one.
 const CLAIM_SECONDS = 30;
 const TURN_REFRESH_HOURS = 24;
+
+// Cloud VM only: power the machine off after this many minutes with nobody streaming or in line, so an on-demand VM
+// stops billing (0 = never; start_experience.bat never passes it, the desktop must not shut down).
+const IDLE_SHUTDOWN_MINUTES = Number(arg('idle_shutdown_minutes', 0));
 
 // Game watchdog (only with --game).
 const GAME = arg('game', '');
@@ -237,6 +242,30 @@ async function watchGame() {
 if (GAME) {
   // First check after the signalling server has had a few seconds to open its ports.
   setInterval(watchGame, 5000);
+}
+
+// ---- Idle shutdown (cloud VM) ------------------------------------------------------------------
+// Counts from startup, so a VM woken by a visitor who never joins the line still powers off.
+
+let lastUsed = Date.now();
+let shuttingDown = false;
+if (IDLE_SHUTDOWN_MINUTES > 0) {
+  log(`idle shutdown: powering off after ${IDLE_SHUTDOWN_MINUTES} min with nobody streaming or waiting`);
+  setInterval(() => {
+    if (session || line.length > 0) {
+      lastUsed = Date.now();
+      return;
+    }
+    if (shuttingDown || Date.now() - lastUsed < IDLE_SHUTDOWN_MINUTES * 60000) return;
+    shuttingDown = true;
+    log(`idle for ${IDLE_SHUTDOWN_MINUTES} min, shutting the machine down`);
+    execFile('shutdown', ['/s', '/t', '0', '/c', 'archv3d: idle, nobody streaming'], (error) => {
+      if (error) {
+        log(`shutdown failed: ${error.message}`);
+        shuttingDown = false;
+      }
+    });
+  }, 30000);
 }
 
 // ---- TURN credentials -----------------------------------------------------------------------

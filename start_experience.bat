@@ -6,9 +6,18 @@ rem      line that shows their place; sessions end after 10 min while others wai
 rem   3. The packaged Movie_Studio build on /Game/Main, rendering off-screen and streaming to it. Launched by the
 rem      gateway, which restarts it if it crashes or stops streaming (viewers keep their place in line meanwhile).
 rem It can be left running: TURN credentials are renewed without a restart.
-rem Usage: start_experience.bat [windowed]   ("windowed" shows the game window, for debugging)
+rem Usage: start_experience.bat [windowed] [cloud]
+rem   windowed  shows the game window, for debugging
+rem   cloud     on the Google Cloud VM (cloud\vm-startup.ps1 runs it at logon): the gateway powers the VM off after
+rem             15 idle minutes, and the tunnel uses servers\tunnel-credentials.json. Never use it on the desktop.
 setlocal
 set ROOT=%~dp0
+set WINDOWED=
+set CLOUD=
+for %%a in (%*) do (
+  if /i "%%~a"=="windowed" set WINDOWED=--windowed
+  if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15
+)
 set GAME=%ROOT%..\Packaged\Windows\Movie_Studio.exe
 set PLAYER_PORT=80
 rem Signalling server's own player/web port; only the gateway should use it.
@@ -37,19 +46,18 @@ start "ArchViz signalling" /D "%ROOT%servers\SignallingWebServer" node dist\inde
   --http_root "%ROOT%frontend\dist" --homepage index.html --console_messages basic ^
   --peer_options_file "%ROOT%servers\peer_options.json" --max_players 1 --rest_api
 
-set WINDOWED=
-if /i "%~1"=="windowed" set WINDOWED=--windowed
-
 rem Queue limits: --session_minutes (while others wait), --idle_minutes_waiting, --idle_minutes_alone.
 rem The gateway also launches the game (/Game/Main, off-screen, 1920x1080 start size; the browser then requests its own
 rem size, capped by maxStreamResolution in config.js) and restarts it if it crashes or stops streaming.
 rem The game log still goes to Saved\Logs\Movie_Studio.log.
 start "ArchViz gateway" /D "%ROOT%servers" node gateway.mjs --port %PLAYER_PORT% --upstream %SIGNALLING_PORT% ^
   --session_minutes 10 --idle_minutes_waiting 3 --idle_minutes_alone 15 ^
-  --game "%GAME%" --streamer_port %STREAMER_PORT% %WINDOWED%
+  --game "%GAME%" --streamer_port %STREAMER_PORT% %WINDOWED% %CLOUD%
 
 rem Public https/wss://archv3d.com (and stream.archv3d.com) -> gateway (named Cloudflare tunnel, see servers\cloudflared.yml).
 set CLOUDFLARED=%ProgramFiles(x86)%\cloudflared\cloudflared.exe
+rem The tunnel config names the desktop's credentials file; on the VM it sits next to the servers instead.
+if defined CLOUD set TUNNEL_CRED_FILE=%ROOT%servers\tunnel-credentials.json
 if exist "%CLOUDFLARED%" (
   start "ArchViz tunnel" /min "%CLOUDFLARED%" tunnel --config "%ROOT%servers\cloudflared.yml" run
 ) else (

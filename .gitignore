@@ -9,3 +9,4 @@ logs/
 *.log
 frontend/*.zip
 .wrangler/
+.dev.vars

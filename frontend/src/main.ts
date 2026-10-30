@@ -1,5 +1,16 @@
 import { Config, PixelStreaming, Flags, Logger, NumericParameters, TextParameters } from '@epicgames-ps/lib-pixelstreamingfrontend-ue5.8';
-import { findLevel, levels, levelUrl, queueUrl, settings, signallingUrl, urlParams } from './site';
+import {
+  cloudStatus,
+  findLevel,
+  levels,
+  levelUrl,
+  queueUrl,
+  settings,
+  signallingUrl,
+  urlParams,
+  wakeCloud,
+  type CloudStatus
+} from './site';
 import './styles.css';
 
 // ---- Types shared with AArchVizPlayerController -------------------------------------------
@@ -175,6 +186,9 @@ stream.addEventListener('webRtcConnected', () => setStatus('Connected, starting 
 const OFFLINE_TEXT = 'The experience is offline right now. Please check back later.';
 // The gateway is up but the game isn't streaming: it restarts the game on its own.
 const RESTARTING_TEXT = 'The experience is restarting, it should be back in a minute.';
+// On-demand cloud VM (wake service, settings.controlUrl): powered off while nobody uses it.
+const ASLEEP_TEXT = 'The experience is asleep to save power. Wake it up and it’s ready in about 3 minutes.';
+const STARTING_TEXT = 'Starting up, usually about 3 minutes. Keep this page open: you’ll join the line automatically.';
 // Backstop: the signalling server itself allows one viewer (--max_players 1).
 const BUSY_TEXT = 'Someone else is exploring right now. Please try again in a few minutes.';
 const ENDED_TEXT: Record<string, string> = {
@@ -221,6 +235,22 @@ let failureText = '';
 let reachedServer = false;
 // Tab title before "Your turn" replaced it (only when the turn came while the tab was in the background).
 let titleBeforeTurn = '';
+// Cloud VM state while the gateway can't be reached ('off': switched off or no cloud).
+let cloud: CloudStatus = 'off';
+// Join the line as soon as the gateway answers: the visitor asked to wake the experience (home page ?wake=1, or the
+// Wake button here), so they shouldn't have to come back and click Start.
+let autoJoin = false;
+
+function wake() {
+  autoJoin = true;
+  cloud = 'starting';
+  renderLobby();
+  void wakeCloud().then((status) => {
+    // Already up ('running') means the stream is about to answer; keep showing it as starting.
+    cloud = status === 'off' ? 'off' : 'starting';
+    if (!queueState) renderLobby();
+  });
+}
 
 function sendGateway(message: Record<string, unknown>) {
   if (queueSocket?.readyState === WebSocket.OPEN) queueSocket.send(JSON.stringify(message));
@@ -252,6 +282,12 @@ function connectQueue() {
     }
     if (!inSession) renderLobby();
     window.setTimeout(connectQueue, 5000);
+    // The gateway is unreachable: the cloud VM may be asleep or still booting.
+    void cloudStatus().then((status) => {
+      // Keep 'starting' between the wake and the VM reporting it.
+      if (!(cloud === 'starting' && status === 'asleep')) cloud = status === 'running' ? 'starting' : status;
+      if (!queueState && !inSession) renderLobby();
+    });
   };
 }
 
@@ -259,6 +295,13 @@ function onGatewayMessage(message: GatewayMessage) {
   reachedGateway = true;
   if (message.type === 'queue') {
     queueState = message;
+    cloud = 'off';
+    if (autoJoin && !inLine && !inSession) {
+      autoJoin = false;
+      failureText = '';
+      inLine = true;
+      sendGateway({ type: 'join' });
+    }
     const pill = $('#queue-pill');
     pill.textContent = `${message.waiting} waiting`;
     pill.classList.toggle('hidden', !inSession || message.waiting === 0);
@@ -290,9 +333,18 @@ function renderLobby() {
   start.disabled = false;
   $('#queue-pill').classList.add('hidden');
   if (!queueState) {
-    start.textContent = 'Try again';
-    start.disabled = !reachedGateway;
-    setStatus(reachedGateway ? OFFLINE_TEXT : 'Checking availability…', reachedGateway);
+    if (cloud === 'asleep') {
+      start.textContent = 'Wake it up';
+      setStatus(ASLEEP_TEXT);
+    } else if (cloud === 'starting') {
+      start.textContent = 'Starting…';
+      start.disabled = true;
+      setStatus(STARTING_TEXT);
+    } else {
+      start.textContent = 'Try again';
+      start.disabled = !reachedGateway;
+      setStatus(reachedGateway ? OFFLINE_TEXT : 'Checking availability…', reachedGateway);
+    }
     return;
   }
   const { online, busy, waiting, position } = queueState;
@@ -436,6 +488,9 @@ $('#start').addEventListener('click', () => {
     failureText = '';
     inLine = true;
     sendGateway({ type: 'join' });
+  } else if (cloud === 'asleep') {
+    wake();
+    return;
   } else {
     failureText = OFFLINE_TEXT;
   }
@@ -444,6 +499,13 @@ $('#start').addEventListener('click', () => {
 
 renderLobby();
 connectQueue();
+// Opened from the home page's Wake card: wake the VM now and drop the flag so a reload doesn't wake it again.
+if (urlParams.get('wake') === '1') {
+  const url = new URL(location.href);
+  url.searchParams.delete('wake');
+  history.replaceState(null, '', url.href);
+  wake();
+}
 
 // ---- Catalog and state from Unreal --------------------------------------------------------
 

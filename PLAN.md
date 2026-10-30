@@ -448,3 +448,19 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   - Contact: header "Contact" and About "Get in touch" open a form dialog (src/home/ContactDialog.tsx) that POSTs JSON to
     the archv3d-contact Worker (contact/). Honeypot + minimum fill time against bots; on failure it shows the email
     address. Tested locally with `wrangler dev` (email written to contact/.wrangler/tmp/email/*.eml).
+- 2026-10-30 ON-DEMAND CLOUD STREAM (Google Cloud L4), code ready, waiting on the user's GCP billing:
+  - Gateway `--idle_shutdown_minutes N` (cloud only, via `start_experience.bat cloud`): `shutdown /s` after N minutes with
+    no session and an empty line, counted from startup so a VM woken by someone who never joins still powers off.
+  - control/ Worker (archv3d-control): GET /status, POST /wake. Service account JWT -> Compute API instances.get/start.
+    Waking allowed only while the VM label archv3d-wake=on (desktop stream-on/off scripts set it). JWT signing checked
+    against Google's token endpoint with a throwaway key ("account not found" = format accepted).
+  - Site: new states Starting up (gateway up, game not yet; or VM booting) and Asleep (blue, "Wake it up"). The
+    experience page wakes the VM (?wake=1 from the home card, or its Wake button) and auto-joins the line when the
+    gateway answers. Tested with mock /queue and /status servers: asleep -> wake -> starting -> up -> auto-joined;
+    off -> Unavailable, not clickable. `?control=<url>` overrides controlUrl for testing.
+  - cloud/: vm-startup.ps1 (every boot as SYSTEM: Node + cloudflared once, auto-logon admin user `streamer`, logon task;
+    rsync build, extract servers.zip/frontend-dist.zip when their generation changes, recreate the 3 workspace
+    junctions, copy secrets, write synced.txt), run-stream.ps1 (waits for synced.txt of this boot, powers off after
+    20 min if the sync never finishes). Servers zip tested locally: 46.5 MB, no secrets, signalling server loads after
+    extract + junctions. Tunnel on the VM: TUNNEL_CRED_FILE=servers\tunnel-credentials.json (env beats the yml path).
+  - Cost estimate (not verified on the price list): ~$0.65/h spot incl. Windows + vWS licences, disk ~$10-15/month.

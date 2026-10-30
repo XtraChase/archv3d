@@ -13,6 +13,7 @@
   --available: #5ed38a;
   --busy: #e6b450;
   --unavailable: #f0645a;
+  --asleep: #8aa6de;
   --radius: 14px;
   --page: 1240px;
   --gutter: clamp(16px, 4vw, 40px);
@@ -284,6 +285,10 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 .status-badge[data-status='available'] .status-dot { background: var(--available); }
 .status-badge[data-status='busy'] .status-dot { background: var(--busy); }
 .status-badge[data-status='unavailable'] .status-dot { background: var(--unavailable); }
+.status-badge[data-status='starting'] .status-dot { background: var(--busy); animation: blink 1.2s ease-in-out infinite; }
+.status-badge[data-status='asleep'] .status-dot { background: var(--asleep); }
+.status-badge[data-status='asleep'] { color: #dde6f7; border-color: rgba(138, 166, 222, 0.45); }
+@keyframes blink { 50% { opacity: 0.35; } }
 .status-badge[data-status='available'] { color: #dff6e7; border-color: rgba(94, 211, 138, 0.45); }
 .status-badge[data-status='unavailable'] { color: #ffe1de; border-color: rgba(240, 100, 90, 0.5); }
 /* Pulse on the live dot. */

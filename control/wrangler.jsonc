@@ -1,0 +1,14 @@
+// Wake/status service for the on-demand cloud stream: tells archv3d.com whether the Google Cloud VM is off, asleep,
+// starting or running, and starts it when a visitor asks. Deployed by Cloudflare Workers Builds from this folder
+// (root directory "control"). Secret GCP_SA_KEY: JSON key of a service account that may only get/start the VM.
+{
+  "name": "archv3d-control",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "vars": {
+    "GCP_PROJECT": "archv3d-stream",
+    "GCP_ZONE": "us-central1-a",
+    "GCP_INSTANCE": "archv3d-stream"
+  }
+}

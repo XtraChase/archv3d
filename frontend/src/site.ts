@@ -18,6 +18,8 @@ export interface SiteConfig {
   levels?: LevelConfig[];
   /** Contact form endpoint (the contact Worker, contact/ in the repo). */
   contactUrl?: string;
+  /** Wake/status service for the on-demand cloud VM (the control Worker, control/ in the repo). */
+  controlUrl?: string;
 }
 
 declare global {
@@ -47,14 +49,50 @@ export const queueUrl = (() => {
   return url.href;
 })();
 
-/** Link to the experience for a level, keeping diagnostic parameters (ss, stats, maxres). */
-export function levelUrl(id: string) {
+/**
+ * State of the on-demand cloud VM from the wake service, asked only when the stream itself can't be reached.
+ * 'off' when waking is switched off, the service isn't configured, or it can't be reached.
+ */
+export type CloudStatus = 'off' | 'asleep' | 'starting' | 'running';
+
+// ?control=<url> overrides it, like ?ss for signalling (testing).
+const controlUrl = urlParams.get('control') ?? settings.controlUrl;
+
+export async function cloudStatus(): Promise<CloudStatus> {
+  if (!controlUrl) return 'off';
+  try {
+    const response = await fetch(new URL('status', controlUrl), { signal: AbortSignal.timeout(6000) });
+    const { status } = (await response.json()) as { status?: string };
+    return status === 'asleep' || status === 'starting' || status === 'running' ? status : 'off';
+  } catch {
+    return 'off';
+  }
+}
+
+/** Asks the wake service to start the cloud VM; it only acts when the VM is asleep. */
+export async function wakeCloud(): Promise<CloudStatus> {
+  if (!controlUrl) return 'off';
+  try {
+    const response = await fetch(new URL('wake', controlUrl), { method: 'POST', keepalive: true });
+    const { status } = (await response.json()) as { status?: string };
+    return status === 'asleep' || status === 'starting' || status === 'running' ? status : 'off';
+  } catch {
+    return 'off';
+  }
+}
+
+/**
+ * Link to the experience for a level, keeping diagnostic parameters (ss, stats, maxres, control). With wake, the experience
+ * page wakes the cloud VM and joins the line by itself once it's up.
+ */
+export function levelUrl(id: string, { wake = false } = {}) {
   const url = new URL('explore.html', location.href);
   url.search = '';
-  for (const name of ['ss', 'stats', 'maxres']) {
+  for (const name of ['ss', 'stats', 'maxres', 'control']) {
     const value = urlParams.get(name);
     if (value !== null) url.searchParams.set(name, value);
   }
   url.searchParams.set('level', id);
+  if (wake) url.searchParams.set('wake', '1');
   return url.href;
 }

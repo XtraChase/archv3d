@@ -63,6 +63,12 @@ function Experiences({ availability }: { availability: Availability }) {
   );
 }
 
+const ACTION_TEXT: Partial<Record<Availability['status'], string>> = {
+  busy: 'Join the line',
+  asleep: 'Wake it up · ready in about 3 min',
+  starting: 'Starting up · join now'
+};
+
 function ExperienceCard({ level, index, availability }: { level: LevelConfig; index: number; availability: Availability }) {
   const unavailable = availability.status === 'unavailable';
   const content = (
@@ -90,7 +96,7 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
             'Offline right now, check back soon'
           ) : (
             <>
-              {availability.status === 'busy' ? 'Join the line' : 'Enter experience'} <ArrowIcon />
+              {ACTION_TEXT[availability.status] ?? 'Enter experience'} <ArrowIcon />
             </>
           )}
         </span>
@@ -98,13 +104,15 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
     </>
   );
 
-  // While the streaming PC is stopped there is nothing to connect to, so the card isn't a link.
+  // While the stream is switched off there is nothing to connect to, so the card isn't a link. Asleep or starting,
+  // the experience page wakes the cloud VM and joins the line by itself once it's up.
+  const waking = availability.status === 'asleep' || availability.status === 'starting';
   return unavailable ? (
     <article className="experience-card is-unavailable" aria-disabled="true">
       {content}
     </article>
   ) : (
-    <a className="experience-card" href={levelUrl(level.id)}>
+    <a className="experience-card" href={levelUrl(level.id, { wake: waking })}>
       {content}
     </a>
   );
