@@ -333,3 +333,10 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   Sunset+Thunderstorm, Noon+Thunderstorm/Snow, Sunset+Clear all render, no warning after the fix.
   Netcade zip rebuilt (frontend/movie-studio-archviz-netcade.zip, 10/30 09:13) but NOT uploaded; live Netcade item is older.
   Editor DLL still the old controller (module loaded in the editor); PIE gets weather/UDS time after the next editor restart.
+- 2026-10-30 TERRAIN: packaged build still had the 10/28 terrain because Build Mesh Partition had not been re-run after the
+  10/29 SplineModifier edits. User ran Build > Mesh Partition (09:33, 18/18 sections), repackaged (3570 pkgs) and restarted.
+  Visual check in the browser not done yet (interrupted).
+- 2026-10-30 GIT: this folder is the repo https://github.com/XtraChase/archv3d (PRIVATE, branch main). gh CLI installed
+  (C:\Program Files\GitHub CLI\gh.exe, logged in as XtraChase). Ignored: servers/turn.env, servers/peer_options.json,
+  node_modules, frontend/dist, logs, the Netcade zip. servers/*/dist are force-added (their own .gitignores exclude dist)
+  so a clone runs after `npm install`; after rebuilding them, `git add -f` again isn't needed (already tracked).
