@@ -3,36 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>archv3d · Interactive architecture</title>
-    <meta name="description" content="Explore architectural projects in your browser, streamed live from Unreal Engine." />
+    <title>archv3d · Chase Richards</title>
+    <meta
+      name="description"
+      content="Interactive architecture streamed live from Unreal Engine, and the portfolio of Chase Richards, technical artist and CAD drafter."
+    />
+    <meta name="theme-color" content="#0f1013" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap"
+    />
     <script src="./config.js"></script>
   </head>
   <body class="home">
-    <header class="home-header">
-      <a class="home-brand" href="./">
-        <span class="brand-mark"></span>
-        <span>archv3d</span>
-      </a>
-      <div class="availability" id="availability" aria-live="polite">
-        <span class="dot"></span>
-        <span id="availability-text">Checking availability…</span>
-      </div>
-    </header>
-
-    <main class="home-main">
-      <section class="home-intro">
-        <h1 id="home-title">archv3d</h1>
-        <p id="home-subtitle" class="muted">Interactive architecture, streamed live from Unreal Engine</p>
-      </section>
-
-      <section class="level-grid" id="level-grid" aria-label="Projects"></section>
-
-      <p class="home-note muted">
-        Runs in any modern browser, no install. One visitor explores at a time; if someone is already inside you can join
-        the line and it starts automatically when it's your turn.
-      </p>
-    </main>
-
-    <script type="module" src="./src/home.ts"></script>
+    <div id="root"></div>
+    <noscript>This site needs JavaScript.</noscript>
+    <script type="module" src="./src/home/main.tsx"></script>
   </body>
 </html>

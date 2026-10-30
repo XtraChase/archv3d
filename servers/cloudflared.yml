@@ -1,5 +1,5 @@
-# Named Cloudflare tunnel exposing the local signalling + web server as https/wss://archv3d.com
-# (stream.archv3d.com kept as an alias).
+# Named Cloudflare tunnel exposing the gateway (stream + waiting line) as https/wss://stream.archv3d.com.
+# archv3d.com itself is served by Cloudflare Pages; its entry below only matters while its DNS record still points here.
 # Run: cloudflared tunnel --config servers\cloudflared.yml run   (start_experience.bat does this)
 # Credentials stay in %USERPROFILE%\.cloudflared (keep the .json secret; delete the tunnel to revoke it).
 tunnel: ce2ce5bf-7e0d-49e8-b7ed-c4e76c75bdb7

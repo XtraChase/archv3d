@@ -1,0 +1,7 @@
+# Cloudflare Pages response headers (ignored by the local signalling server).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/portfolio/*
+  Cache-Control: public, max-age=604800
+/config.js
+  Cache-Control: no-cache

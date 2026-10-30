@@ -426,3 +426,16 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     videoInitialized (playStream), so the setting is applied on the 'playStream' event (setTimeout 0), which play()s the
     elements; a rejected play() = browser block -> muted fallback + hint. Checked: video + audio elements unmuted at 70% and
     playing, Mute -> both muted (icon x), slider 20% -> unmuted at 0.2 (low icon, saved), Esc closes panel, M -> "Sound off".
+- 2026-10-30 HOME PAGE ON CLOUDFLARE PAGES (React) + portfolio:
+  - Hosting split so the home page stays up while the streaming PC is off: archv3d.com = Cloudflare Pages built from GitHub
+    (root `frontend`, `npm run build`, output `dist`); stream.archv3d.com = tunnel -> gateway on this PC (only while running).
+    config.js now points every non-local page at wss://stream.archv3d.com. The desktop server still serves the same frontend/dist
+    at http://127.0.0.1/ (rebuild after changes).
+  - index.html is now React (src/home/*): hero, experiences (from config.js levels), portfolio, about. Hash routes (#/work/<slug>)
+    so it works on Pages, the local server and Netcade without rewrites. explore.html (main.ts) unchanged.
+  - Availability badge top right of each experience card, from the gateway's /queue socket: green "Available Now", amber
+    "In Use", red "Unavailable" (socket can't connect = PC/tunnel stopped, or game not streaming); retries every 5 s.
+    Unavailable cards are not clickable. Tested with a mock /queue server: free -> down -> busy switches live.
+  - Portfolio: 8 projects from chaserichards.artstation.com (titles, dates, descriptions, categories, software, images, clips,
+    YouTube ids) in src/data/projects.json, media in public/portfolio/<slug>/ (webp max 2400 px; clips re-encoded H.264 1080p,
+    no audio, all < 17 MB for the Pages 25 MiB limit). Shown newest first by publishing date, like the old site.

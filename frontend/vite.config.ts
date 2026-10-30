@@ -1,10 +1,12 @@
 import { fileURLToPath } from 'node:url';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Relative paths so the build works from any folder, including Netcade's iframe.
-// Two pages: index.html (landing page, pick a level) and explore.html (the stream).
+// Relative paths so the build works from any folder: Cloudflare Pages, the local signalling server and Netcade's iframe.
+// Two pages: index.html (home page in React: experiences and portfolio) and explore.html (the stream).
 export default defineConfig({
   base: './',
+  plugins: [react()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

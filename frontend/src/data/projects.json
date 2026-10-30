@@ -1,0 +1,505 @@
+[
+  {
+    "slug": "madison-ridge-outdoor-kitchen",
+    "title": "Madison Ridge Hideaway Outdoor Kitchen",
+    "published": "2026-08-25",
+    "description": [],
+    "categories": [],
+    "software": [],
+    "mediums": [
+      "Digital 2D",
+      "Digital 3D"
+    ],
+    "cover": "portfolio/madison-ridge-outdoor-kitchen/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1440,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/03.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/04.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/05.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/06.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/07.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/08.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1483,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/09.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1440,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/10.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1440,
+        "type": "image",
+        "src": "portfolio/madison-ridge-outdoor-kitchen/11.webp"
+      }
+    ]
+  },
+  {
+    "slug": "my-work-in-revit",
+    "title": "My Work In Revit",
+    "published": "2026-04-30",
+    "description": [],
+    "categories": [
+      "Architectural Visualization"
+    ],
+    "software": [
+      "Revit"
+    ],
+    "mediums": [
+      "Digital 2D",
+      "Digital 3D"
+    ],
+    "cover": "portfolio/my-work-in-revit/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/03.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/04.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/05.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1280,
+        "type": "image",
+        "src": "portfolio/my-work-in-revit/06.webp"
+      }
+    ]
+  },
+  {
+    "slug": "jaguar-grill",
+    "title": "Jaguar Grill",
+    "published": "2024-08-14",
+    "description": [
+      "Jaguar grill product design"
+    ],
+    "categories": [
+      "Industrial & Product Design",
+      "Hard Surface"
+    ],
+    "software": [
+      "Maya",
+      "Unreal Engine",
+      "ZBrush",
+      "SolidWorks"
+    ],
+    "mediums": [
+      "Digital 3D"
+    ],
+    "cover": "portfolio/jaguar-grill/cover.webp",
+    "media": [
+      {
+        "width": 1280,
+        "height": 720,
+        "type": "youtube",
+        "id": "HxUq6poMpD4",
+        "poster": "portfolio/jaguar-grill/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1066,
+        "type": "video",
+        "src": "portfolio/jaguar-grill/02.mp4",
+        "poster": "portfolio/jaguar-grill/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1077,
+        "type": "image",
+        "src": "portfolio/jaguar-grill/03.webp"
+      }
+    ]
+  },
+  {
+    "slug": "trail-of-the-undead",
+    "title": "Creating The World of \"Trail of the Undead\"",
+    "published": "2024-06-07",
+    "description": [
+      "Join Ben, a pioneer in the late 1800s, as he fights enemies and explores the Wild West. See how we crafted immersive landscapes, lifelike water, and dynamic weather in Unreal Engine. Discover the tech and artistry behind the game, and learn how we push the boundaries of game development."
+    ],
+    "categories": [
+      "Games and Real-Time 3D Environment Art",
+      "Gameplay & Level Design",
+      "Technical Art"
+    ],
+    "software": [
+      "Unreal Engine",
+      "Premiere"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Real-time"
+    ],
+    "cover": "portfolio/trail-of-the-undead/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/trail-of-the-undead/01.webp"
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "type": "youtube",
+        "id": "I0nbN8fjyp8",
+        "poster": "portfolio/trail-of-the-undead/02.webp"
+      }
+    ]
+  },
+  {
+    "slug": "springtime-in-the-west",
+    "title": "Springtime In The West",
+    "published": "2023-03-01",
+    "description": [
+      "This project began with a journey to various old gold mining towns and ghost towns situated around Montana, where I collected images to create photogrammetry models. I used full models such as the wagon and buildings in the first cut, along with photogrammetry-converted tileable materials visible on the freight depot and the roofs of some structures. To gain more knowledge about the use of photogrammetry in games, I followed Vertex School's \"Advanced Environment Art Bootcamp,\" which provided an in-depth understanding of the technique. The tutorial by FastTrack Tutorials helped me create most of the town. I hope to continue expanding this environment by scanning Montana's scenic beauty once the snow melts and Spring has finally come."
+    ],
+    "categories": [],
+    "software": [
+      "Unreal Engine",
+      "Maya",
+      "ZBrush",
+      "RealityScan",
+      "Substance 3D Painter",
+      "Substance 3D Designer",
+      "SpeedTree",
+      "Photoshop",
+      "Premiere",
+      "xNormal"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Real-time"
+    ],
+    "cover": "portfolio/springtime-in-the-west/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 814,
+        "type": "video",
+        "src": "portfolio/springtime-in-the-west/01.mp4",
+        "poster": "portfolio/springtime-in-the-west/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/03.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/04.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/05.webp"
+      },
+      {
+        "width": 1920,
+        "height": 817,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/06.webp"
+      },
+      {
+        "width": 1920,
+        "height": 817,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/07.webp"
+      },
+      {
+        "width": 1920,
+        "height": 813,
+        "type": "image",
+        "src": "portfolio/springtime-in-the-west/08.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "caption": "Photogrammetry-converted Tileable Material",
+        "type": "video",
+        "src": "portfolio/springtime-in-the-west/09.mp4",
+        "poster": "portfolio/springtime-in-the-west/09.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "caption": "Game-ready Photogrammetry Model",
+        "type": "video",
+        "src": "portfolio/springtime-in-the-west/10.mp4",
+        "poster": "portfolio/springtime-in-the-west/10.webp"
+      }
+    ]
+  },
+  {
+    "slug": "80-level-mars-colony-interview",
+    "title": "80 Level Interview: Designing Assets for a Mars Colony Environment",
+    "published": "2022-10-12",
+    "description": [
+      "I had the honor of doing an interview with 80 Level detailing my process when making assets for my mars colony environment. Here is a link to the article: https://80.lv/articles/designing-assets-for-a-mars-colony-environment/"
+    ],
+    "categories": [
+      "Games and Real-Time 3D Environment Art"
+    ],
+    "software": [
+      "Unreal Engine",
+      "Maya",
+      "Substance 3D Painter",
+      "Photoshop"
+    ],
+    "mediums": [
+      "Digital 3D"
+    ],
+    "cover": "portfolio/80-level-mars-colony-interview/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 814,
+        "type": "video",
+        "src": "portfolio/80-level-mars-colony-interview/01.mp4",
+        "poster": "portfolio/80-level-mars-colony-interview/01.webp"
+      },
+      {
+        "width": 1053,
+        "height": 1257,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/02.webp"
+      },
+      {
+        "width": 993,
+        "height": 1144,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/03.webp"
+      },
+      {
+        "width": 998,
+        "height": 1195,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/04.webp"
+      },
+      {
+        "width": 993,
+        "height": 1018,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/05.webp"
+      },
+      {
+        "width": 992,
+        "height": 1120,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/06.webp"
+      },
+      {
+        "width": 1006,
+        "height": 993,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/07.webp"
+      },
+      {
+        "width": 1006,
+        "height": 1024,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/08.webp"
+      },
+      {
+        "width": 1010,
+        "height": 701,
+        "type": "image",
+        "src": "portfolio/80-level-mars-colony-interview/09.webp"
+      }
+    ]
+  },
+  {
+    "slug": "mars-colony-outer-rim",
+    "title": "Mars Colony Outer Rim",
+    "published": "2022-05-10",
+    "description": [
+      "Life on mars is not like the brochures made it out to be. We see their towering trees on the far side of the walls that separate us. Water is handed down from the inner city through those walls and gets to our impoverished zone at the end of the pipes. Our only chance is to show them that the outer rim grows strong."
+    ],
+    "categories": [],
+    "software": [
+      "Maya",
+      "Substance 3D Painter",
+      "Unreal Engine",
+      "Photoshop",
+      "Premiere"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Animation"
+    ],
+    "cover": "portfolio/mars-colony-outer-rim/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 814,
+        "type": "video",
+        "src": "portfolio/mars-colony-outer-rim/01.mp4",
+        "poster": "portfolio/mars-colony-outer-rim/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 822,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 822,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/03.webp"
+      },
+      {
+        "width": 1920,
+        "height": 824,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/04.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1028,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/05.webp"
+      },
+      {
+        "width": 1920,
+        "height": 977,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/06.webp"
+      },
+      {
+        "width": 1920,
+        "height": 895,
+        "type": "image",
+        "src": "portfolio/mars-colony-outer-rim/07.webp"
+      }
+    ]
+  },
+  {
+    "slug": "forever-reaching-out",
+    "title": "Forever Reaching Out",
+    "published": "2022-03-22",
+    "description": [
+      "For this project, I wanted to create a changing environment that slowly reveals a journey from out of the shadows. Building this mysterious cavern setting helped me understand the basics of environment creation in Unreal Engine and I had the privilege of receiving great feedback from my mentor Chico Spans. With the rocket ready to launch I hope to discover where it will lead me. Stay tuned! https://www.artstation.com/chicospans"
+    ],
+    "categories": [],
+    "software": [
+      "Unreal Engine",
+      "Maya",
+      "ZBrush",
+      "Substance 3D Painter",
+      "Photoshop",
+      "Premiere"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Animation"
+    ],
+    "cover": "portfolio/forever-reaching-out/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "video",
+        "src": "portfolio/forever-reaching-out/01.mp4",
+        "poster": "portfolio/forever-reaching-out/01.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/forever-reaching-out/02.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "image",
+        "src": "portfolio/forever-reaching-out/03.webp"
+      },
+      {
+        "width": 1920,
+        "height": 1271,
+        "type": "image",
+        "src": "portfolio/forever-reaching-out/04.webp"
+      }
+    ]
+  }
+]
