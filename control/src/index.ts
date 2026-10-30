@@ -55,10 +55,36 @@ const base64url = (data: ArrayBuffer | string) =>
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 
+/**
+ * The key file's JSON as pasted into the dashboard. Forgives what pasting tends to add: surrounding whitespace or
+ * quotes, a byte-order mark, or the file base64-encoded. On failure the log shows its shape, never its content.
+ */
+function parseServiceAccountKey(raw: string) {
+  let text = raw.replace(/^﻿/, '').trim();
+  if (/^["'][\s\S]*["']$/.test(text)) text = text.slice(1, -1).trim();
+  if (!text.startsWith('{')) {
+    try {
+      text = atob(text.replace(/\s/g, ''));
+    } catch {
+      // Not base64 either; reported below.
+    }
+  }
+  try {
+    const key = JSON.parse(text) as { client_email?: string; private_key?: string };
+    if (key.client_email && key.private_key) return key as { client_email: string; private_key: string };
+    throw new Error('missing client_email or private_key');
+  } catch (error) {
+    throw new Error(
+      `GCP_SA_KEY is not a service account key file (${(error as Error).message}; ${raw.length} characters, ` +
+        `starts ${JSON.stringify(raw.slice(0, 2))}, ends ${JSON.stringify(raw.slice(-2))})`
+    );
+  }
+}
+
 async function accessToken(env: Env) {
   const now = Math.floor(Date.now() / 1000);
   if (token && token.expires > now + 60) return token.value;
-  const key = JSON.parse(env.GCP_SA_KEY!) as { client_email: string; private_key: string };
+  const key = parseServiceAccountKey(env.GCP_SA_KEY!);
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const claims = base64url(
     JSON.stringify({
