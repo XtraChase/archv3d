@@ -2,7 +2,11 @@
 #   cloud\upload.ps1              build, servers, page files and scripts (only changed build files are sent)
 #   cloud\upload.ps1 -Secrets     also servers\turn.env and the tunnel credentials (first time, or after rotating them)
 # Package the game first (..\Packaged\Windows) and run `npm run build` in frontend\.
-param([switch]$Secrets)
+param(
+  [switch]$Secrets,
+  # Unreal's prerequisite installers (Visual C++ runtime, GameInput) for the VM; the packaged build doesn't include them.
+  [string]$EngineRedist = 'D:\UE_5.8\Engine\Extras\Redist\en-us'
+)
 # Not 'Stop': gcloud and tar report progress on stderr. Every program call below checks its exit code instead.
 $ErrorActionPreference = 'Continue'
 . "$PSScriptRoot\config.ps1"
@@ -34,6 +38,9 @@ Write-Host 'Page files...'
 & $tar -a -c -f "$temp\frontend-dist.zip" -C "$Web\frontend\dist" --exclude 'portfolio' .
 if ($LASTEXITCODE) { throw 'zipping frontend\dist failed' }
 GCloud storage cp "$temp\frontend-dist.zip" "gs://$Bucket/web/frontend-dist.zip"
+
+Write-Host 'Unreal prerequisites...'
+GCloud storage cp "$EngineRedist\vc_redist.x64.exe" "$EngineRedist\GameInputRedist.msi" "gs://$Bucket/web/redist/"
 
 Write-Host 'Scripts...'
 GCloud storage cp "$Web\start_experience.bat" "$Web\stop_experience.bat" "gs://$Bucket/web/"

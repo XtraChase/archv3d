@@ -49,6 +49,19 @@ try {
     Start-Process msiexec.exe -Wait -ArgumentList '/i', $msi, '/qn', '/norestart'
   }
 
+  # Unreal's runtime prerequisites (Visual C++ runtime, GameInput), which Windows Server lacks and the packaged build
+  # doesn't install; without them the game exits at launch. Uploaded from the engine's Extras\Redist by upload.ps1.
+  if (-not (Test-Path "$Root\redist.installed")) {
+    Log 'installing Unreal prerequisites'
+    $redist = New-Item -ItemType Directory -Force "$env:TEMP\archv3d-redist"
+    GCloud storage cp "gs://$bucket/web/redist/*" "$redist"
+    Start-Process "$redist\vc_redist.x64.exe" -Wait -ArgumentList '/install', '/quiet', '/norestart'
+    if (Test-Path "$redist\GameInputRedist.msi") {
+      Start-Process msiexec.exe -Wait -ArgumentList '/i', "$redist\GameInputRedist.msi", '/qn', '/norestart'
+    }
+    Set-Content "$Root\redist.installed" (Get-Date -Format s)
+  }
+
   # Auto-logon user: the game renders on the GPU from an interactive session, and its logon task starts the stream.
   # Administrator so the gateway may shut the VM down when idle. Its password is random and only kept for auto-logon.
   if (-not (Get-LocalUser $User -ErrorAction SilentlyContinue)) {
