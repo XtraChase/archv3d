@@ -419,5 +419,10 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     autoplay, then the setting is applied on videoInitialized to the video element and the library's separate audio element
     (private _webRtcController.streamController.audioElement). If the browser pauses the unmuted video (no recent click), it falls
     back to muted playback with the hint "Click anywhere to turn the sound on" and unmutes on the next click/key.
-  - Game target compiled; frontend built. NOT yet repackaged: a game started 13:05 by start_experience.bat was still running
-    (gateway/signalling windows gone), so packaging would overwrite its files. User to Stop ArchViz Stream first.
+  - Repackaged + VERIFIED locally: "Local audio: 1 output session(s) muted" ~7 s after launch (the first check at startup runs
+    before the audio device opens, so the game can be audible locally for a few seconds after each launch).
+    PS2 sends audio on its own stream (streamId pixelstreaming_audio_stream_id), so the library plays it through its detached
+    <audio> element, and with StartVideoMuted it never starts that element. The library also re-mutes everything AFTER
+    videoInitialized (playStream), so the setting is applied on the 'playStream' event (setTimeout 0), which play()s the
+    elements; a rejected play() = browser block -> muted fallback + hint. Checked: video + audio elements unmuted at 70% and
+    playing, Mute -> both muted (icon x), slider 20% -> unmuted at 0.2 (low icon, saved), Esc closes panel, M -> "Sound off".

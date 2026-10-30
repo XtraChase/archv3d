@@ -399,9 +399,11 @@ stream.addEventListener('videoInitialized', () => {
   $('#queue-pill').classList.toggle('hidden', !queueState?.waiting);
   // Unreal opens the visitor's level first if another one is running.
   send({ cmd: 'hello', level: currentLevel.id });
-  applySound(true);
   showHint('Drag to look around · scroll to zoom · press H for controls');
 });
+// The library starts playback after videoInitialized and mutes everything then (StartVideoMuted); apply the
+// visitor's setting right after that.
+stream.addEventListener('playStream', () => window.setTimeout(() => applySound(true), 0));
 stream.addEventListener('webRtcDisconnected', () => {
   streamOpen = false;
   clearConnectTimer();
@@ -779,25 +781,29 @@ function renderSound() {
   mute.setAttribute('aria-pressed', String(sound.muted));
 }
 
-/** Applies the setting to the stream. checkBlocked: the video just started, so find out whether sound is allowed. */
+/**
+ * Applies the setting to the stream. The library leaves its separate audio element paused when it starts muted,
+ * so audible elements are (re)started here. checkBlocked: the stream just started, so find out whether the browser
+ * allows sound yet.
+ */
 function applySound(checkBlocked = false) {
   renderSound();
   const audible = !sound.muted && sound.volume > 0 && !soundBlocked;
-  for (const element of mediaElements()) {
+  const plays = mediaElements().map((element) => {
     element.volume = sound.volume;
     element.muted = !audible;
-    if (audible && element.paused) element.play().catch(() => undefined);
+    return audible ? element.play() : Promise.resolve();
+  });
+  if (!checkBlocked || !audible) {
+    plays.forEach((play) => play.catch(() => undefined));
+    return;
   }
-  if (!checkBlocked || !audible) return;
-  // Browsers pause a video that unmutes without a recent click; fall back to muted playback and ask for one.
-  window.setTimeout(() => {
-    const video = document.querySelector<HTMLVideoElement>('#stage video');
-    if (!video?.paused) return;
+  // Without a recent click the browser refuses (and pauses) unmuted playback: play muted and ask for one.
+  Promise.all(plays).catch(() => {
     soundBlocked = true;
     applySound();
-    video.play().catch(() => undefined);
     showHint('Click anywhere to turn the sound on');
-  }, 400);
+  });
 }
 
 function saveSound() {
