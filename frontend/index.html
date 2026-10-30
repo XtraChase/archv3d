@@ -2,128 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Movie Studio · Interactive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>archv3d · Interactive architecture</title>
+    <meta name="description" content="Explore architectural projects in your browser, streamed live from Unreal Engine." />
     <script src="./config.js"></script>
   </head>
-  <body>
-    <div id="stage"></div>
-
-    <!-- Start / connection overlay -->
-    <section id="overlay" class="overlay">
-      <div class="overlay-card">
-        <h1 id="title">Movie Studio</h1>
-        <p id="subtitle" class="muted">Interactive architectural experience</p>
-        <button id="start" class="primary">Start experience</button>
-        <p id="status" class="status" aria-live="polite"></p>
+  <body class="home">
+    <header class="home-header">
+      <a class="home-brand" href="./">
+        <span class="brand-mark"></span>
+        <span>archv3d</span>
+      </a>
+      <div class="availability" id="availability" aria-live="polite">
+        <span class="dot"></span>
+        <span id="availability-text">Checking availability…</span>
       </div>
-    </section>
+    </header>
 
-    <!-- Main UI, shown once the stream is playing -->
-    <div id="ui" class="ui hidden">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark"></span>
-          <span id="brand-title">Movie Studio</span>
-        </div>
-        <div class="queue-pill hidden" id="queue-pill" title="People waiting for their turn"></div>
-        <div class="top-actions">
-          <button class="icon" id="btn-help" title="Controls (H)" aria-label="Controls">?</button>
-          <button class="icon" id="btn-shot" title="Save screenshot" aria-label="Save screenshot">
-            <svg viewBox="0 0 24 24"><path d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9Zm3 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
-          </button>
-          <button class="icon" id="btn-full" title="Fullscreen" aria-label="Fullscreen">
-            <svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4V4Zm10 0h6v6h-2V6h-4V4ZM4 14h2v4h4v2H4v-6Zm14 0h2v6h-6v-2h4v-4Z"/></svg>
-          </button>
-        </div>
-      </header>
+    <main class="home-main">
+      <section class="home-intro">
+        <h1 id="home-title">archv3d</h1>
+        <p id="home-subtitle" class="muted">Interactive architecture, streamed live from Unreal Engine</p>
+      </section>
 
-      <nav class="rail" aria-label="Tools">
-        <button class="rail-btn active" data-panel="views" title="Views">
-          <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/></svg>
-          <span>Views</span>
-        </button>
-        <button class="rail-btn" data-panel="sky" title="Time of day and weather" id="rail-sky">
-          <svg viewBox="0 0 24 24"><path d="M9 2h2v2.5H9V2ZM3.3 4.7l1.4-1.4 1.8 1.8-1.4 1.4-1.8-1.8ZM1 10h2.5v2H1v-2Zm12.5-4.9 1.8-1.8 1.4 1.4-1.8 1.8-1.4-1.4ZM10 6a4 4 0 0 1 3.9 3.1A5.5 5.5 0 0 1 22 13.5 4.5 4.5 0 0 1 17.5 18H8a4 4 0 0 1-2.9-6.8A4 4 0 0 1 10 6Zm0 2a2 2 0 0 0-1.9 1.4A4 4 0 0 1 12 9.4 2 2 0 0 0 10 8Z"/></svg>
-          <span>Sky</span>
-        </button>
-        <button class="rail-btn hidden" data-panel="finishes" title="Finishes" id="rail-finishes">
-          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 9.8C22 5.5 17.5 2 12 2ZM6.5 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
-          <span>Finishes</span>
-        </button>
-        <button class="rail-btn hidden" id="rail-lights" title="Interior lights">
-          <svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9v1Zm3-19a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Z"/></svg>
-          <span>Lights</span>
-        </button>
-      </nav>
+      <section class="level-grid" id="level-grid" aria-label="Projects"></section>
 
-      <aside class="panel" id="panel-views">
-        <h2>Views</h2>
-        <div class="tabs" id="view-tabs"></div>
-        <ul class="view-list" id="view-list"></ul>
-      </aside>
+      <p class="home-note muted">
+        Runs in any modern browser, no install. One visitor explores at a time; if someone is already inside you can join
+        the line and it starts automatically when it's your turn.
+      </p>
+    </main>
 
-      <aside class="panel hidden" id="panel-sky">
-        <section id="sky-time">
-          <h2>Time of day</h2>
-          <div class="clock" id="clock">12:00</div>
-          <input type="range" id="sun-slider" min="5" max="21" step="0.05" value="12" aria-label="Time of day" />
-          <div class="presets" id="time-presets"></div>
-        </section>
-        <section id="sky-weather" class="hidden">
-          <h2>Weather</h2>
-          <div class="weather-grid" id="weather-grid"></div>
-        </section>
-      </aside>
-
-      <aside class="panel hidden" id="panel-finishes">
-        <h2>Finishes</h2>
-        <div id="variant-groups"></div>
-      </aside>
-
-      <footer class="bottombar">
-        <div class="segmented" role="group" aria-label="Navigation mode">
-          <button data-mode="orbit" class="active">Orbit</button>
-          <button data-mode="walk">Walk</button>
-        </div>
-        <div class="zoom" id="zoom">
-          <button class="icon" data-zoom="1" aria-label="Zoom in">+</button>
-          <button class="icon" data-zoom="-1" aria-label="Zoom out">&minus;</button>
-        </div>
-      </footer>
-
-      <div class="hint" id="hint"></div>
-      <div class="notice hidden" id="notice" role="alert"></div>
-    </div>
-
-    <section id="help" class="overlay hidden">
-      <div class="overlay-card help">
-        <h2>Controls</h2>
-        <div class="help-cols">
-          <div>
-            <h3>Orbit</h3>
-            <ul>
-              <li><b>Left drag</b> rotate</li>
-              <li><b>Right drag</b> / <b>Shift + drag</b> pan</li>
-              <li><b>Wheel</b> / <b>Q E</b> zoom</li>
-              <li><b>Double click</b> focus on a point</li>
-              <li><b>WASD</b> pan · <b>Arrows</b> rotate</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Walk</h3>
-            <ul>
-              <li><b>Left drag</b> look around</li>
-              <li><b>WASD</b> / <b>Arrows</b> move</li>
-              <li><b>Shift</b> run</li>
-              <li><b>Double click</b> walk to a spot</li>
-            </ul>
-          </div>
-        </div>
-        <button class="primary" id="help-close">Got it</button>
-      </div>
-    </section>
-
-    <script type="module" src="./src/main.ts"></script>
+    <script type="module" src="./src/home.ts"></script>
   </body>
 </html>

@@ -371,3 +371,29 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   unfurnished lobby at any time of day (interior lit only by bounce light). Fix options: interior ceiling lights, or raise Lumen
   Final Gather / Scene Lighting quality in the PostProcessVolume.
   Not touched: PCG trees (104,587 instanced PVE plants) - likely the largest remaining GPU cost; reduce density if FPS headroom needed.
+- 2026-10-30 SECOND LEVEL: /Game/Levels/AsBuilt_WP (furnished two-storey house, UDS + UDW already in the level) on archv3d.com.
+  Design: ONE game process and ONE viewer queue for all levels. The browser asks for a level by id; the controller opens it
+  (OpenLevelBySoftObjectPtr), the PS2 stream stays connected through the load, the new level's controller sends the catalog.
+  - C++ (AArchVizPlayerController): Levels allowlist (FArchVizLevel Id/Name/Map; defaults studio=/Game/Main, house=/Game/Levels/AsBuilt_WP),
+    {cmd:"hello", level:id} opens that level if another is running, {cmd:"level", value:id}; UE -> UI {event:"loading", level};
+    catalog adds level + levels[]. Console: ArchViz level house. Game target rebuilt OK; editor DLL is still the old one.
+  - AsBuilt_WP: WorldSettings DefaultGameMode -> ArchVizGameMode (was BP_FirstPersonGameMode). 9 AArchVizCameraPoint in outliner
+    folder ArchViz (always loaded): Exterior orbit Front / Aerial / Back Yard, walk Front Porch (at PlayerStart_Driveway);
+    Interior walk Living Room, Kitchen, Dining, Bedroom, Upstairs Bedroom (loft angles were all cramped, left out).
+    NOT SAVED by MCP (new WP actors) -> user File > Save All.
+  - AsBuilt_WP had NO Mesh Partition compiled sections (Main has 18) -> terrain would be missing when cooked. Needs
+    Build > Mesh Partition > Build Mesh Partition with AsBuilt_WP open (user), before packaging.
+  - DefaultGame.ini: +MapsToCook /Game/Main and /Game/Levels/AsBuilt_WP (nothing references the maps; opened by id at runtime).
+    Package with -map=/Game/Main+/Game/Levels/AsBuilt_WP.
+  - Frontend is now two pages: index.html = landing page (level cards from config.js levels[], live availability from the
+    /queue socket without joining), explore.html?level=<id> = the experience (sends hello with the level, Projects rail panel
+    switches level in-session, loading overlay, brand/back links to the landing page). Shared settings in src/site.ts.
+    Card images expected at public/levels/<id>.jpg (cards fall back to a gradient).
+  - User saved (9 hotspots + game mode) and ran Build Mesh Partition on AsBuilt_WP: 9/9 compiled sections, 0 failed.
+  - Packaged both maps (BuildCookRun ... -map=/Game/Main+/Game/Levels/AsBuilt_WP, 1 min 51 s, 4,671 pkgs vs 3,661).
+  - VERIFIED locally (gateway + signalling on localhost, no tunnel, windowed game): landing page "Available now"; house card ->
+    game was on Main, opened AsBuilt_WP in 0.8 s, terrain + grass + UDS sky + 9 hotspots; Living Room / Kitchen walk views OK;
+    Projects panel -> Movie Studio: loading overlay, Main in 1.6 s, URL/title -> level=studio, stream never dropped.
+    Card images grabbed from the stream video (1280x720 jpg): house = Front view, studio = start aerial.
+  - Netcade zip rebuilt (landing page is its index.html) but NOT uploaded.
+  - To go live: start_experience.bat (desktop shortcut "Start ArchViz Stream"); frontend/dist is already rebuilt.

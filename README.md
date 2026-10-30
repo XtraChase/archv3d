@@ -1,10 +1,16 @@
 # archv3d
 
 Web front end and streaming servers for the interactive archviz experience at https://archv3d.com,
-streamed from the Unreal Engine 5.8 project `Movie_Studio` (level `/Game/Main`) with Pixel Streaming 2.
+streamed from the Unreal Engine 5.8 project `Movie_Studio` with Pixel Streaming 2. Levels: Movie Studio (`/Game/Main`)
+and As-Built Residence (`/Game/Levels/AsBuilt_WP`), served by one game process and one waiting line; the game opens
+whichever level the current visitor picked.
 
 - `frontend/` – the browser UI (Vite + TypeScript + `@epicgames-ps/lib-pixelstreamingfrontend-ue5.8`):
-  views, orbit/walk, time of day, weather, queue. Runtime settings in `frontend/public/config.js`.
+  `index.html` is the landing page (pick a level, live availability), `explore.html?level=<id>` the experience
+  (views, orbit/walk, time of day, weather, switching level, queue). Runtime settings and the level list are in
+  `frontend/public/config.js`; card images in `frontend/public/levels/<id>.jpg`. To add a level: add it to
+  `AArchVizPlayerController::Levels` (C++) and `MapsToCook`, give the map `ArchVizGameMode` and `AArchVizCameraPoint`
+  hotspots, then list it in `config.js` with the same id.
 - `servers/gateway.mjs` – public entry point on port 80: one viewer at a time, a waiting line, session/idle limits,
   TURN credential refresh, and a watchdog that launches and restarts the packaged game.
 - `servers/SignallingWebServer`, `Signalling`, `Common` – Epic's Pixel Streaming signalling server (Wilbur, MIT,

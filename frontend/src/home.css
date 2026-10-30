@@ -1,0 +1,134 @@
+/* Landing page (index.html). Shares tokens, .primary and .brand-mark with styles.css. */
+
+html:has(body.home), body.home {
+  overflow: auto;
+  height: auto;
+  min-height: 100%;
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+body.home {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(217, 183, 126, 0.12), transparent 70%),
+    var(--bg-solid);
+}
+
+.home-header {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 18px;
+}
+
+.availability {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.availability .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #777;
+}
+.availability[data-state='free'] .dot { background: #6fd389; box-shadow: 0 0 8px #6fd389; }
+.availability[data-state='busy'] .dot { background: var(--accent); }
+.availability[data-state='restarting'] .dot { background: #e8a25c; }
+.availability[data-state='offline'] .dot { background: #ff9b8a; }
+
+.home-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+.home-intro { text-align: center; margin-bottom: 40px; }
+.home-intro h1 {
+  font-size: clamp(32px, 6vw, 56px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+}
+.home-intro p { margin: 0; font-size: 17px; }
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+.level-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.level-card:hover, .level-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  outline: none;
+}
+.level-media {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #2a2d33, #16181c);
+  overflow: hidden;
+}
+.level-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.level-card:hover .level-media img { transform: scale(1.03); }
+.level-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px 22px 22px;
+}
+.level-body h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.level-subtitle {
+  margin: 4px 0 0;
+  color: var(--accent);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.level-description { margin: 12px 0 0; font-size: 15px; line-height: 1.5; }
+.level-action { align-self: flex-start; margin-top: 18px; padding: 11px 26px; }
+
+.home-note {
+  max-width: 640px;
+  margin: 40px auto 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .home-header { padding: 16px; }
+  .home-main { padding: 16px 16px 48px; }
+  .home-intro { margin-bottom: 28px; }
+}

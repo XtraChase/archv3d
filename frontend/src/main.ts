@@ -1,4 +1,5 @@
 import { Config, PixelStreaming, Flags, Logger, NumericParameters, TextParameters } from '@epicgames-ps/lib-pixelstreamingfrontend-ue5.8';
+import { findLevel, levels, levelUrl, queueUrl, settings, signallingUrl, urlParams } from './site';
 import './styles.css';
 
 // ---- Types shared with AArchVizPlayerController -------------------------------------------
@@ -19,6 +20,8 @@ interface VariantSetInfo {
 
 interface CatalogMessage {
   event: 'catalog';
+  /** Id of the open level (config.js levels[].id), empty if Unreal doesn't list it. */
+  level?: string;
   cameras: CameraInfo[];
   variants: VariantSetInfo[];
   /** Ultra Dynamic Weather preset names; empty when the level has no weather system. */
@@ -38,23 +41,21 @@ interface StateMessage {
   lights: boolean;
 }
 
-type UEMessage = CatalogMessage | StateMessage;
-
-declare global {
-  interface Window {
-    ARCHVIZ_CONFIG?: { signallingUrl?: string; maxStreamResolution?: string; title?: string; subtitle?: string };
-    archvizStats?: Record<string, string | number>;
-  }
+/** Unreal is opening another level; a catalog follows once it has loaded. */
+interface LoadingMessage {
+  event: 'loading';
+  level: string;
 }
+
+type UEMessage = CatalogMessage | StateMessage | LoadingMessage;
 
 // ---- Helpers ------------------------------------------------------------------------------
 
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector(selector) as T;
 const $$ = <T extends HTMLElement = HTMLElement>(selector: string) => Array.from(document.querySelectorAll(selector)) as T[];
 
-const settings = window.ARCHVIZ_CONFIG ?? {};
-const urlParams = new URLSearchParams(location.search);
-const signallingUrl = urlParams.get('ss') ?? settings.signallingUrl ?? `ws://${location.hostname}:80`;
+// The level picked on the landing page (?level=<id>); the first one when missing or unknown.
+let currentLevel = findLevel(urlParams.get('level')) ?? levels[0];
 
 // Stream resolution cap: the library requests the stage size x ViewportResScale, so shrink that scale
 // whenever the stage is larger than the cap (long/short sides, so portrait screens get the rotated box).
@@ -133,6 +134,7 @@ stream.addResponseEventListener('archviz', (response: string) => {
   }
   if (message.event === 'catalog') applyCatalog(message);
   else if (message.event === 'state') applyState(message);
+  else if (message.event === 'loading') showLoading(message.level);
 });
 
 // Stream diagnostics: `?stats=1` shows an overlay; the latest summary is always on window.archvizStats.
@@ -202,13 +204,6 @@ interface EndedMessage {
   reason: string;
 }
 type GatewayMessage = QueueMessage | TurnMessage | EndingMessage | EndedMessage;
-
-const queueUrl = (() => {
-  const url = new URL(signallingUrl);
-  url.pathname = '/queue';
-  url.search = '';
-  return url.href;
-})();
 
 let queueSocket: WebSocket | null = null;
 let queueState: QueueMessage | null = null;
@@ -401,13 +396,15 @@ stream.addEventListener('videoInitialized', () => {
   $('#overlay').classList.add('hidden');
   $('#ui').classList.remove('hidden');
   $('#queue-pill').classList.toggle('hidden', !queueState?.waiting);
-  send({ cmd: 'hello' });
+  // Unreal opens the visitor's level first if another one is running.
+  send({ cmd: 'hello', level: currentLevel.id });
   showHint('Drag to look around · scroll to zoom · press H for controls');
 });
 stream.addEventListener('webRtcDisconnected', () => {
   streamOpen = false;
   clearConnectTimer();
   showNotice(null);
+  hideLoading();
   $('#ui').classList.add('hidden');
   $('#overlay').classList.remove('hidden');
   if (inSession) {
@@ -452,6 +449,15 @@ let activeCamera = '';
 let lightsOn = true;
 
 function applyCatalog(catalog: CatalogMessage) {
+  const level = findLevel(catalog.level);
+  if (level && level !== currentLevel) {
+    currentLevel = level;
+    applyBranding();
+    history.replaceState(null, '', levelUrl(level.id));
+  }
+  hideLoading();
+  renderLevels();
+
   cameras = catalog.cameras;
   const categories = [...new Set(cameras.map((camera) => camera.category))];
   if (!categories.includes(activeCategory)) activeCategory = categories[0] ?? '';
@@ -543,6 +549,51 @@ function applyState(state: StateMessage) {
 
   lightsOn = state.lights;
   $('#rail-lights').classList.toggle('on', lightsOn);
+}
+
+// ---- Levels -------------------------------------------------------------------------------
+
+// Level switches take a few seconds while Unreal loads; give up on the overlay if no catalog arrives.
+let loadingTimer = 0;
+function showLoading(levelId: string) {
+  const level = findLevel(levelId);
+  $('#loading-text').textContent = `Loading ${level?.title ?? 'project'}…`;
+  $('#loading').classList.remove('hidden');
+  window.clearTimeout(loadingTimer);
+  loadingTimer = window.setTimeout(hideLoading, 60000);
+}
+
+function hideLoading() {
+  window.clearTimeout(loadingTimer);
+  $('#loading').classList.add('hidden');
+}
+
+function renderLevels() {
+  $('#rail-levels').classList.toggle('hidden', levels.length < 2);
+  $('#level-list').replaceChildren(
+    ...levels.map((level) => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.classList.toggle('active', level === currentLevel);
+      const name = document.createElement('span');
+      name.textContent = level.title;
+      button.append(name);
+      if (level.subtitle) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = level.subtitle;
+        button.append(badge);
+      }
+      button.addEventListener('click', () => {
+        if (level === currentLevel) return;
+        openPanel('');
+        showLoading(level.id);
+        send({ cmd: 'level', value: level.id });
+      });
+      item.append(button);
+      return item;
+    })
+  );
 }
 
 // ---- Controls -----------------------------------------------------------------------------
@@ -667,7 +718,7 @@ $('#btn-shot').addEventListener('click', () => {
   canvas.height = video.videoHeight;
   canvas.getContext('2d')!.drawImage(video, 0, 0);
   const link = document.createElement('a');
-  link.download = `movie-studio-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+  link.download = `${currentLevel.id}-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
   showHint('Screenshot saved');
@@ -693,9 +744,11 @@ document.addEventListener('keydown', (event) => {
 
 // ---- Branding -----------------------------------------------------------------------------
 
-if (settings.title) {
-  $('#title').textContent = settings.title;
-  $('#brand-title').textContent = settings.title;
-  document.title = `${settings.title} · Interactive`;
+function applyBranding() {
+  $('#title').textContent = currentLevel.title;
+  $('#brand-title').textContent = currentLevel.title;
+  $('#subtitle').textContent = currentLevel.subtitle ?? 'Interactive architectural experience';
+  document.title = `${currentLevel.title} · ${settings.title ?? 'Interactive'}`;
 }
-if (settings.subtitle) $('#subtitle').textContent = settings.subtitle;
+applyBranding();
+renderLevels();
