@@ -16,6 +16,8 @@ export interface SiteConfig {
   title?: string;
   subtitle?: string;
   levels?: LevelConfig[];
+  /** Contact form endpoint (the contact Worker, contact/ in the repo). */
+  contactUrl?: string;
 }
 
 declare global {

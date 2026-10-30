@@ -5,13 +5,13 @@ import { href } from './routing';
 import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
 
-export function HomePage({ availability }: { availability: Availability }) {
+export function HomePage({ availability, onContact }: { availability: Availability; onContact: () => void }) {
   return (
     <>
       <Hero />
       <Experiences availability={availability} />
       <Portfolio />
-      <About />
+      <About onContact={onContact} />
     </>
   );
 }
@@ -164,7 +164,7 @@ function WorkCard({ project }: { project: Project }) {
   );
 }
 
-function About() {
+function About({ onContact }: { onContact: () => void }) {
   return (
     <section id="about" className="section about">
       <div className="about-intro">
@@ -172,9 +172,9 @@ function About() {
         <h2 className="section-title">{profile.name}</h2>
         <p className="about-role">{profile.role}</p>
         <p className="muted">{profile.location}</p>
-        <a className="button button-primary" href={`mailto:${profile.email}`}>
+        <button className="button button-primary" onClick={onContact}>
           Get in touch <ArrowIcon />
-        </a>
+        </button>
       </div>
       <div className="about-body">
         <p className="about-summary">{profile.summary}</p>

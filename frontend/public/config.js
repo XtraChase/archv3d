@@ -8,6 +8,8 @@ window.ARCHVIZ_CONFIG = {
   signallingUrl: /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
     ? 'ws://127.0.0.1:80'
     : 'wss://stream.archv3d.com',
+  // Contact form endpoint: the archv3d-contact Worker (contact/ in the repo), which emails each message to Chase.
+  contactUrl: 'https://archv3d-contact.james-chase-richards.workers.dev/',
   // Largest stream the browser may request, as 'WIDTHxHEIGHT' (swapped for portrait screens).
   // Bigger windows are streamed at this size and upscaled. Override with ?maxres=1280x720.
   maxStreamResolution: '1920x1080',

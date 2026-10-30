@@ -439,3 +439,12 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   - Portfolio: 8 projects from chaserichards.artstation.com (titles, dates, descriptions, categories, software, images, clips,
     YouTube ids) in src/data/projects.json, media in public/portfolio/<slug>/ (webp max 2400 px; clips re-encoded H.264 1080p,
     no audio, all < 17 MB for the Pages 25 MiB limit). Shown newest first by publishing date, like the old site.
+- 2026-10-30 STREAM FAILED ON THE PAGES SITE (user report) + CONTACT FORM:
+  - Cause: archv3d.com's zone gives config.js `Cache-Control: max-age=14400` (zone Browser Cache TTL overrides Pages'
+    _headers). Browsers that loaded archv3d.com before the move kept the old config.js, whose signallingUrl was
+    wss://archv3d.com (now Pages, no WebSockets), so the experience never reached the gateway (signalling log showed no
+    player). Fix: vite.config.ts links config.js as config.js?v=<build id>, a new URL every build. Verified a stream from
+    https://archv3d.com/explore?level=studio connects (views loaded).
+  - Contact: header "Contact" and About "Get in touch" open a form dialog (src/home/ContactDialog.tsx) that POSTs JSON to
+    the archv3d-contact Worker (contact/). Honeypot + minimum fill time against bots; on failure it shows the email
+    address. Tested locally with `wrangler dev` (email written to contact/.wrangler/tmp/email/*.eml).

@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { settings } from '../site';
 import { useAvailability } from './availability';
+import { ContactDialog } from './ContactDialog';
 import { HomePage } from './HomePage';
 import { ProjectPage } from './ProjectPage';
 import { findProject } from './projects';
@@ -43,22 +44,27 @@ export function App() {
     document.title = project ? `${project.title} · ${profile.name}` : `${brand} · ${profile.name}`;
   }, [route]);
 
+  const [contactOpen, setContactOpen] = useState(false);
+  const openContact = useCallback(() => setContactOpen(true), []);
+  const closeContact = useCallback(() => setContactOpen(false), []);
+
   return (
     <>
-      <Header />
+      <Header onContact={openContact} />
       <main>
         {route.page === 'project' ? (
           <ProjectPage slug={route.slug} />
         ) : (
-          <HomePage availability={availability} />
+          <HomePage availability={availability} onContact={openContact} />
         )}
       </main>
       <Footer />
+      {contactOpen && <ContactDialog onClose={closeContact} />}
     </>
   );
 }
 
-function Header() {
+function Header({ onContact }: { onContact: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 24);
@@ -84,9 +90,9 @@ function Header() {
           <a href={href.section('experiences')}>Experiences</a>
           <a href={href.section('work')}>Portfolio</a>
           <a href={href.section('about')}>About</a>
-          <a className="nav-contact" href={`mailto:${profile.email}`}>
+          <button className="nav-contact" onClick={onContact}>
             Contact
-          </a>
+          </button>
         </nav>
       </div>
     </header>
