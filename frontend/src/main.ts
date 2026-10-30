@@ -240,10 +240,19 @@ let cloud: CloudStatus = 'off';
 // Join the line as soon as the gateway answers: the visitor asked to wake the experience (home page ?wake=1, or the
 // Wake button here), so they shouldn't have to come back and click Start.
 let autoJoin = false;
+// Wake attempts for this visit. The VM can fall asleep again while starting (a spot VM preempted for lack of
+// capacity, or one still shutting down when woken), so the page wakes it again a few times before giving up.
+let wakeAttempts = 0;
+let lastWake = 0;
+const MAX_WAKE_ATTEMPTS = 4;
+// How long the wake service may still report 'asleep' right after a wake before it counts as having fallen asleep.
+const WAKE_SETTLE_MS = 45000;
 
 function wake() {
   autoJoin = true;
   cloud = 'starting';
+  wakeAttempts++;
+  lastWake = Date.now();
   renderLobby();
   void wakeCloud().then((status) => {
     // Already up ('running') means the stream is about to answer; keep showing it as starting.
@@ -284,8 +293,17 @@ function connectQueue() {
     window.setTimeout(connectQueue, 5000);
     // The gateway is unreachable: the cloud VM may be asleep or still booting.
     void cloudStatus().then((status) => {
-      // Keep 'starting' between the wake and the VM reporting it.
-      if (!(cloud === 'starting' && status === 'asleep')) cloud = status === 'running' ? 'starting' : status;
+      if (cloud === 'starting' && status === 'asleep') {
+        // Woken but asleep again: still settling, or it stopped while starting. Wake again, or give up.
+        if (Date.now() - lastWake < WAKE_SETTLE_MS) return;
+        if (wakeAttempts < MAX_WAKE_ATTEMPTS) {
+          wake();
+          return;
+        }
+        autoJoin = false;
+        failureText = 'The cloud machine couldn’t start right now (no capacity). Please try again in a few minutes.';
+      }
+      cloud = status === 'running' ? 'starting' : status;
       if (!queueState && !inSession) renderLobby();
     });
   };
@@ -335,7 +353,7 @@ function renderLobby() {
   if (!queueState) {
     if (cloud === 'asleep') {
       start.textContent = 'Wake it up';
-      setStatus(ASLEEP_TEXT);
+      setStatus(failureText || ASLEEP_TEXT, !!failureText);
     } else if (cloud === 'starting') {
       start.textContent = 'Starting…';
       start.disabled = true;
@@ -489,6 +507,9 @@ $('#start').addEventListener('click', () => {
     inLine = true;
     sendGateway({ type: 'join' });
   } else if (cloud === 'asleep') {
+    // A fresh try from the visitor: a new round of attempts.
+    wakeAttempts = 0;
+    failureText = '';
     wake();
     return;
   } else {
