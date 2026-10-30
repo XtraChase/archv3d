@@ -3,14 +3,20 @@
 #   cloud\upload.ps1 -Secrets     also servers\turn.env and the tunnel credentials (first time, or after rotating them)
 # Package the game first (..\Packaged\Windows) and run `npm run build` in frontend\.
 param([switch]$Secrets)
-$ErrorActionPreference = 'Stop'
+# Not 'Stop': gcloud and tar report progress on stderr. Every program call below checks its exit code instead.
+$ErrorActionPreference = 'Continue'
 . "$PSScriptRoot\config.ps1"
 $Web = Split-Path $PSScriptRoot
 $Build = Join-Path (Split-Path $Web) 'Packaged\Windows'
 $tar = "$env:SystemRoot\System32\tar.exe"
 $temp = New-Item -ItemType Directory -Force (Join-Path $env:TEMP 'archv3d-upload')
 
-function GCloud { & gcloud @args; if ($LASTEXITCODE) { throw "gcloud $args failed ($LASTEXITCODE)" } }
+# The program by path: PowerShell names are case-insensitive, so `gcloud` inside GCloud would call GCloud itself.
+$gcloudExe = (Get-Command gcloud.cmd -CommandType Application -ErrorAction Stop).Source
+function GCloud {
+  & $gcloudExe @args 2>&1 | ForEach-Object { "$_" }
+  if ($LASTEXITCODE) { throw "gcloud $args failed ($LASTEXITCODE)" }
+}
 
 Write-Host 'Packaged build...'
 GCloud storage rsync --recursive --delete-unmatched-destination-objects $Build "gs://$Bucket/build"

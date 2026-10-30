@@ -22,7 +22,13 @@ function Meta($name) {
 
 $gcloud = 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd'
 if (-not (Test-Path $gcloud)) { $gcloud = (Get-Command gcloud.cmd).Source }
-function GCloud { & $gcloud @args --quiet; if ($LASTEXITCODE) { throw "gcloud $args failed ($LASTEXITCODE)" } }
+# gcloud reports progress on stderr, which Windows PowerShell turns into errors under 'Stop' when output is
+# redirected (as it is for startup scripts); judge it by exit code and keep its output in the log.
+function GCloud {
+  $ErrorActionPreference = 'Continue'
+  & $gcloud @args --quiet 2>&1 | ForEach-Object { "$_" } | Out-File -Append -Encoding utf8 "$Root\vm-startup.log"
+  if ($LASTEXITCODE) { throw "gcloud $args failed ($LASTEXITCODE)" }
+}
 
 try {
   $bucket = Meta 'archv3d-bucket'
@@ -79,7 +85,10 @@ try {
   foreach ($archive in @(
       @{ Name = 'servers.zip'; Target = "$Web\servers" },
       @{ Name = 'frontend-dist.zip'; Target = "$Web\frontend\dist" })) {
-    $generation = (& $gcloud storage objects describe "gs://$bucket/web/$($archive.Name)" --format='value(generation)').Trim()
+    $ErrorActionPreference = 'Continue'
+    $generation = "$(& $gcloud storage objects describe "gs://$bucket/web/$($archive.Name)" --format='value(generation)' 2>$null)".Trim()
+    $ErrorActionPreference = 'Stop'
+    if (-not $generation) { throw "gs://$bucket/web/$($archive.Name) not found" }
     $marker = "$Root\$($archive.Name).generation"
     if ((Get-Content $marker -ErrorAction SilentlyContinue) -ne $generation) {
       Log "extracting $($archive.Name) (generation $generation)"
@@ -87,7 +96,9 @@ try {
       GCloud storage cp "gs://$bucket/web/$($archive.Name)" $zip
       if (Test-Path $archive.Target) { Remove-Item -Recurse -Force $archive.Target }
       New-Item -ItemType Directory -Force $archive.Target | Out-Null
-      & tar.exe -x -f $zip -C $archive.Target
+      $ErrorActionPreference = 'Continue'
+      & tar.exe -x -f $zip -C $archive.Target 2>&1 | Out-File -Append -Encoding utf8 "$Root\vm-startup.log"
+      $ErrorActionPreference = 'Stop'
       if ($LASTEXITCODE) { throw "extracting $($archive.Name) failed" }
       Set-Content $marker $generation
     }
