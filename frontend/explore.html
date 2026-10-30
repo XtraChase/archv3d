@@ -37,6 +37,16 @@
         </a>
         <div class="queue-pill hidden" id="queue-pill" title="People waiting for their turn"></div>
         <div class="top-actions">
+          <div class="sound">
+            <button class="icon" id="btn-sound" title="Sound" aria-label="Sound" aria-expanded="false" aria-controls="sound-panel">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path id="sound-icon" d="M3 9v6h4l5 5V4L7 9H3Z"/></svg>
+            </button>
+            <div class="sound-panel hidden" id="sound-panel" role="group" aria-label="Sound">
+              <button class="sound-mute" id="sound-mute" aria-pressed="false">Mute</button>
+              <input type="range" id="sound-slider" min="0" max="100" step="1" value="70" aria-label="Volume" />
+              <output id="sound-value" for="sound-slider">70%</output>
+            </div>
+          </div>
           <button class="icon" id="btn-help" title="Controls (H)" aria-label="Controls">?</button>
           <button class="icon" id="btn-shot" title="Save screenshot" aria-label="Save screenshot">
             <svg viewBox="0 0 24 24"><path d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9Zm3 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
@@ -138,6 +148,7 @@
             </ul>
           </div>
         </div>
+        <p class="help-note">Press <b>M</b> to mute or unmute the sound.</p>
         <button class="primary" id="help-close">Got it</button>
       </div>
     </section>

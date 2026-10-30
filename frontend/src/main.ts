@@ -100,6 +100,7 @@ const config = new Config({
     ss: signallingUrl,
     AutoConnect: false,
     AutoPlayVideo: true,
+    // Muted so the video can always autoplay; the visitor's sound setting is applied once it plays (see Sound).
     StartVideoMuted: true,
     HoveringMouse: true,
     FakeMouseWithTouches: true,
@@ -398,6 +399,7 @@ stream.addEventListener('videoInitialized', () => {
   $('#queue-pill').classList.toggle('hidden', !queueState?.waiting);
   // Unreal opens the visitor's level first if another one is running.
   send({ cmd: 'hello', level: currentLevel.id });
+  applySound(true);
   showHint('Drag to look around · scroll to zoom · press H for controls');
 });
 stream.addEventListener('webRtcDisconnected', () => {
@@ -733,13 +735,130 @@ $('#btn-full').addEventListener('click', async () => {
   }
 });
 
+// ---- Sound -------------------------------------------------------------------------------
+// The game's audio only exists in the stream (the streaming PC's own speakers are muted), so it plays only here and
+// stops when the stream does. The setting is remembered between visits.
+
+const SOUND_KEY = 'archviz-sound';
+const sound = (() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SOUND_KEY) ?? '');
+    return { volume: Math.min(1, Math.max(0, Number(saved.volume) || 0)), muted: Boolean(saved.muted) };
+  } catch {
+    return { volume: 0.7, muted: false };
+  }
+})();
+// The browser refused to play sound before the visitor interacted with the stream; retried on the next click or key.
+let soundBlocked = false;
+
+const SOUND_ICONS = {
+  off: 'M3 9v6h4l5 5V4L7 9H3Zm13.6.4 1.4-1.4 2 2 2-2 1.4 1.4-2 2 2 2-1.4 1.4-2-2-2 2-1.4-1.4 2-2-2-2Z',
+  low: 'M3 9v6h4l5 5V4L7 9H3Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4Z',
+  high: 'M3 9v6h4l5 5V4L7 9H3Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4ZM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z'
+};
+
+/** The stream's media elements: the video, plus the library's own audio element when audio arrives separately. */
+function mediaElements(): HTMLMediaElement[] {
+  const elements: HTMLMediaElement[] = Array.from(document.querySelectorAll<HTMLVideoElement>('#stage video'));
+  const controller = (stream as unknown as { _webRtcController?: { streamController?: { audioElement?: HTMLAudioElement } } })
+    ._webRtcController;
+  const audio = controller?.streamController?.audioElement;
+  if (audio?.srcObject) elements.push(audio);
+  return elements;
+}
+
+function renderSound() {
+  const silent = sound.muted || sound.volume === 0;
+  const percent = Math.round(sound.volume * 100);
+  $('#sound-icon').setAttribute('d', silent ? SOUND_ICONS.off : sound.volume < 0.5 ? SOUND_ICONS.low : SOUND_ICONS.high);
+  $('#btn-sound').title = silent ? 'Sound off (M)' : `Sound ${percent}% (M)`;
+  $<HTMLInputElement>('#sound-slider').value = String(percent);
+  $('#sound-value').textContent = `${percent}%`;
+  const mute = $('#sound-mute');
+  mute.textContent = sound.muted ? 'Unmute' : 'Mute';
+  mute.setAttribute('aria-pressed', String(sound.muted));
+}
+
+/** Applies the setting to the stream. checkBlocked: the video just started, so find out whether sound is allowed. */
+function applySound(checkBlocked = false) {
+  renderSound();
+  const audible = !sound.muted && sound.volume > 0 && !soundBlocked;
+  for (const element of mediaElements()) {
+    element.volume = sound.volume;
+    element.muted = !audible;
+    if (audible && element.paused) element.play().catch(() => undefined);
+  }
+  if (!checkBlocked || !audible) return;
+  // Browsers pause a video that unmutes without a recent click; fall back to muted playback and ask for one.
+  window.setTimeout(() => {
+    const video = document.querySelector<HTMLVideoElement>('#stage video');
+    if (!video?.paused) return;
+    soundBlocked = true;
+    applySound();
+    video.play().catch(() => undefined);
+    showHint('Click anywhere to turn the sound on');
+  }, 400);
+}
+
+function saveSound() {
+  try {
+    localStorage.setItem(SOUND_KEY, JSON.stringify(sound));
+  } catch {
+    // Private mode: the setting lasts for this visit only.
+  }
+}
+
+function setSound(change: Partial<typeof sound>) {
+  Object.assign(sound, change);
+  // Moving the slider up from zero means the visitor wants sound.
+  if (change.volume !== undefined && change.volume > 0) sound.muted = false;
+  saveSound();
+  applySound();
+}
+
+const soundPanel = $('#sound-panel');
+const soundButton = $('#btn-sound');
+function toggleSoundPanel(open = soundPanel.classList.contains('hidden')) {
+  soundPanel.classList.toggle('hidden', !open);
+  soundButton.setAttribute('aria-expanded', String(open));
+}
+soundButton.addEventListener('click', () => toggleSoundPanel());
+$('#sound-mute').addEventListener('click', () => setSound({ muted: !sound.muted }));
+$<HTMLInputElement>('#sound-slider').addEventListener('input', (event) =>
+  setSound({ volume: Number((event.target as HTMLInputElement).value) / 100 })
+);
+document.addEventListener('pointerdown', (event) => {
+  if (!soundPanel.classList.contains('hidden') && !(event.target as Element).closest('.sound')) toggleSoundPanel(false);
+});
+// A click or key press inside the experience is the permission the browser wanted.
+for (const type of ['pointerdown', 'keydown']) {
+  window.addEventListener(
+    type,
+    () => {
+      if (soundBlocked && inSession) {
+        soundBlocked = false;
+        applySound();
+      }
+    },
+    { capture: true }
+  );
+}
+renderSound();
+
 const help = $('#help');
 const toggleHelp = () => help.classList.toggle('hidden');
 $('#btn-help').addEventListener('click', toggleHelp);
 $('#help-close').addEventListener('click', toggleHelp);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'h' || event.key === 'H') toggleHelp();
-  if (event.key === 'Escape') help.classList.add('hidden');
+  if (event.key === 'Escape') {
+    help.classList.add('hidden');
+    toggleSoundPanel(false);
+  }
+  if ((event.key === 'm' || event.key === 'M') && !(event.target as Element).closest('input')) {
+    setSound({ muted: !sound.muted });
+    showHint(sound.muted || sound.volume === 0 ? 'Sound off' : `Sound on, ${Math.round(sound.volume * 100)}%`);
+  }
 });
 
 // ---- Branding -----------------------------------------------------------------------------

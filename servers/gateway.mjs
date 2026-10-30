@@ -196,6 +196,8 @@ function launchGame() {
     '-ForceRes',
     // No error dialogs: a message box (e.g. after a GPU hang) would block the game instead of letting it exit.
     '-unattended',
+    // Silent on this PC's speakers (Windows volume mixer); the stream still carries the game's audio.
+    '-ArchVizMuteLocalAudio',
     `-PixelStreamingConnectionURL=ws://127.0.0.1:${STREAMER_PORT}`
   ];
   // Detached, so the game keeps running if the gateway's window is closed (stop_experience.bat stops both).

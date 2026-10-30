@@ -407,3 +407,17 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     the walker climbed every frame. AArchVizWalkPawn::TraceFloor now ignores start-penetrating hits (remembered in
     EnclosingComponents, logged once: "Walk: ignoring ..."). Lobby view now stable.
     Still recommended: set that box's Visibility response to Ignore in Main (it also catches double-click focus/walk traces).
+- 2026-10-30 AUDIO (user report: thunder kept playing after leaving the experience, back on the landing page).
+  Cause: the page never played sound (StartVideoMuted true, never unmuted); what played was the GAME on the streaming PC's
+  own speakers, which keeps running (with the last visitor's weather) between sessions.
+  - Game: new ArchViz/ArchVizLocalAudio.cpp mutes this process in the Windows volume mixer (Core Audio sessions on every active
+    output device, re-checked every 5 s) when launched with -ArchVizMuteLocalAudio; the gateway now passes it. PS2's
+    FAudioProducer listens on the engine's main submix, so the stream keeps its audio. Log: "Local audio: N output session(s) muted".
+    Module class FMovieStudioModule replaces FDefaultGameModuleImpl. PIE / manual launches without the flag stay audible.
+  - Frontend: speaker button in the top bar (icon follows level) with a popover: Mute/Unmute + volume slider + %, M toggles mute
+    (listed in the Controls help). Setting saved in localStorage 'archviz-sound' (default 70%, on). Stream still starts muted for
+    autoplay, then the setting is applied on videoInitialized to the video element and the library's separate audio element
+    (private _webRtcController.streamController.audioElement). If the browser pauses the unmuted video (no recent click), it falls
+    back to muted playback with the hint "Click anywhere to turn the sound on" and unmutes on the next click/key.
+  - Game target compiled; frontend built. NOT yet repackaged: a game started 13:05 by start_experience.bat was still running
+    (gateway/signalling windows gone), so packaging would overwrite its files. User to Stop ArchViz Stream first.
