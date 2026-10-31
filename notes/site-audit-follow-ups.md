@@ -69,7 +69,7 @@ Add ArtStation, LinkedIn, YouTube and the 80 Level article to the About section 
 in the `Person` JSON-LD in `index.html`. That ties the site to your existing reputation for search engines. I didn't
 guess the URLs.
 
-### 9. ~~A visual hero~~ (done 2026-10-31: a turning building model, `src/home/HeroBuilding.tsx`; a rendered clip is still an option)
+### 9. ~~A visual hero~~ (done 2026-10-31: a turning twisted high-rise, `src/home/HeroBuilding.tsx`; a rendered clip is still an option)
 On desktop the first screen is a headline and two buttons, with the right half empty. For an archviz studio the first
 thing a visitor sees should be the work: a muted looping clip (about 5–10 s, under 2 MB, with a WebP poster) or a still
 from the Movie Studio level, on the right or behind the text. You'd need to render or choose the clip. The code is
