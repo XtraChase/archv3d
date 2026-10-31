@@ -88,7 +88,7 @@ so I left it.
 
 ### 12a. Portfolio videos have no sound
 None of the seven self-hosted clips has an audio track; ffprobe shows video only:
-`80-level-mars-colony-interview/01.mp4`, `forever-reaching-out/01.mp4`, `jaguar-grill/02.mp4`,
+`80-level-mars-colony-interview/01.mp4`, ~~`forever-reaching-out/01.mp4`~~ (replaced 2026-10-31 with the V3 render with sound), `jaguar-grill/02.mp4`,
 `mars-colony-outer-rim/01.mp4` and `springtime-in-the-west/01.mp4`, `09.mp4`, `10.mp4`. They came over from
 ArtStation, which typically stores uploaded clips as silent loops, so the sound can't be recovered from these files.
 The two YouTube embeds (Jaguar Grill and Trail of the Undead) do have sound.
