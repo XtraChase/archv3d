@@ -155,12 +155,6 @@ const shade = (opacity: number) => SHADES[Math.max(0, Math.min(47, Math.round(op
 const TOP = PODIUM_HEIGHT + FLOORS * FLOOR_HEIGHT;
 const MODEL_CENTER_Y = (TOP + MAST * 0.5) / 2;
 
-/** Podium roof details, in model space: terrace outline, planters and skylights as [x0, z0, x1, z1] rectangles. */
-const TERRACE = roundedRect(2.35, 1.75, 0.12, 2);
-const PLANTERS: [number, number, number, number][] = [
-  [-1.12, 0.62, -0.78, 0.8], [0.78, 0.62, 1.12, 0.8], [-1.12, -0.8, -0.78, -0.62], [0.78, -0.8, 1.12, -0.62]
-];
-const SKYLIGHTS: [number, number, number, number][] = [-0.5, -0.25, 0, 0.25, 0.5].map((x) => [x - 0.08, -0.82, x + 0.08, -0.7]);
 
 /** Trees on the plaza: [x, z, radius]. */
 const TREES: [number, number, number][] = [
@@ -289,10 +283,7 @@ function draw(context: CanvasRenderingContext2D, width: number, height: number, 
   };
   trees.filter((tree) => tree.depth < 0).forEach(drawTree);
 
-  MODEL.forEach((prism, index) => {
-    drawPrism(prism, SIDES[index]);
-    if (index === 1) drawTerrace();
-  });
+  MODEL.forEach((prism, index) => drawPrism(prism, SIDES[index]));
 
   // Mast with an aircraft warning light.
   const [mx0, my0] = at(0, TOP, 0);
@@ -314,31 +305,6 @@ function draw(context: CanvasRenderingContext2D, width: number, height: number, 
   context.fill();
 
   trees.filter((tree) => tree.depth >= 0).forEach(drawTree);
-
-  /** Podium roof: a terrace edge, planters along it and a row of skylights. */
-  function drawTerrace() {
-    const y = PODIUM_HEIGHT;
-    polygon(TERRACE.map(([x, z]) => at(x, y, z)));
-    context.strokeStyle = `rgba(${ACCENT}, 0.35)`;
-    context.lineWidth = 1;
-    context.setLineDash([4, 3]);
-    context.stroke();
-    context.setLineDash([]);
-    for (const [x0, z0, x1, z1] of PLANTERS) {
-      polygon([at(x0, y, z0), at(x1, y, z0), at(x1, y, z1), at(x0, y, z1)]);
-      context.fillStyle = `rgba(${ACCENT}, 0.16)`;
-      context.fill();
-      context.strokeStyle = `rgba(${ACCENT}, 0.4)`;
-      context.stroke();
-    }
-    for (const [x0, z0, x1, z1] of SKYLIGHTS) {
-      polygon([at(x0, y, z0), at(x1, y, z0), at(x1, y, z1), at(x0, y, z1)]);
-      context.fillStyle = `rgba(${WARM}, 0.12)`;
-      context.fill();
-      context.strokeStyle = `rgba(${ACCENT}, 0.55)`;
-      context.stroke();
-    }
-  }
 
   function drawPrism({ footprint, y0, y1, kind }: Prism, sides: Side[]) {
     const n = footprint.length;
