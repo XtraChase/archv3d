@@ -9,11 +9,12 @@ export interface ImageMedia {
   caption?: string;
 }
 
-/** A silent clip hosted with the site. */
+/** A clip hosted with the site. It autoplays muted; set audio when the file has a sound track to show a sound toggle. */
 export interface VideoMedia {
   type: 'video';
   src: string;
   poster: string;
+  audio?: boolean;
   width: number;
   height: number;
   caption?: string;

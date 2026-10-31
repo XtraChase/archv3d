@@ -31,3 +31,10 @@ export const ChevronIcon = ({ direction }: { direction: 'left' | 'right' }) => (
     <path d={direction === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} {...stroke} />
   </svg>
 );
+
+export const SoundIcon = ({ muted }: { muted: boolean }) => (
+  <svg {...common}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" />
+    {muted ? <path d="M16 9.5l5 5M21 9.5l-5 5" {...stroke} /> : <path d="M16 9a4.2 4.2 0 0 1 0 6M18.5 6.5a7.8 7.8 0 0 1 0 11" {...stroke} />}
+  </svg>
+);

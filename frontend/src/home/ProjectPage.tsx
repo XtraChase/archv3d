@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Lightbox } from './Lightbox';
 import { findProject, formatPublished, projects, type ImageMedia, type Media, type Project } from './projects';
 import { href } from './routing';
-import { BackIcon, PlayIcon } from './icons';
+import { BackIcon, PlayIcon, SoundIcon } from './icons';
 
 export function ProjectPage({ slug }: { slug: string }) {
   const project = findProject(slug);
@@ -115,13 +115,18 @@ function MediaView({ item, label, onOpen }: { item: Media; label: string; onOpen
       </button>
     );
   }
-  if (item.type === 'video') return <AutoVideo src={item.src} poster={item.poster} ratio={ratio} label={label} />;
+  if (item.type === 'video') return <AutoVideo src={item.src} poster={item.poster} ratio={ratio} label={label} audio={item.audio} />;
   return <YouTube id={item.id} poster={item.poster} label={label} />;
 }
 
-/** Silent clip that plays while on screen and pauses when scrolled away; nothing loads until it's near the viewport. */
-function AutoVideo({ src, poster, ratio, label }: { src: string; poster: string; ratio: string; label: string }) {
+/**
+ * Clip that plays while on screen and pauses when scrolled away; nothing loads until it's near the viewport. It starts
+ * muted (browsers only autoplay silent video); clips with a sound track get a Sound on/off button, kept in step with
+ * the player's own volume control.
+ */
+function AutoVideo({ src, poster, ratio, label, audio }: { src: string; poster: string; ratio: string; label: string; audio?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
   useEffect(() => {
     const element = video.current;
     if (!element) return;
@@ -133,22 +138,42 @@ function AutoVideo({ src, poster, ratio, label }: { src: string; poster: string;
       { threshold: 0.35 }
     );
     observer.observe(element);
-    return () => observer.disconnect();
+    const sync = () => setMuted(element.muted);
+    element.addEventListener('volumechange', sync);
+    return () => {
+      observer.disconnect();
+      element.removeEventListener('volumechange', sync);
+    };
   }, []);
+
+  const toggleSound = () => {
+    const element = video.current;
+    if (!element) return;
+    element.muted = !element.muted;
+    if (!element.muted) void element.play().catch(() => {});
+  };
+
   return (
-    <video
-      ref={video}
-      className="media-video"
-      style={{ aspectRatio: ratio }}
-      src={src}
-      poster={poster}
-      aria-label={label}
-      muted
-      loop
-      playsInline
-      controls
-      preload="none"
-    />
+    <div className="media-video-wrap">
+      <video
+        ref={video}
+        className="media-video"
+        style={{ aspectRatio: ratio }}
+        src={src}
+        poster={poster}
+        aria-label={label}
+        muted
+        loop
+        playsInline
+        controls
+        preload="none"
+      />
+      {audio && (
+        <button className="video-sound" onClick={toggleSound} aria-pressed={!muted}>
+          <SoundIcon muted={muted} /> {muted ? 'Sound on' : 'Sound off'}
+        </button>
+      )}
+    </div>
   );
 }
 

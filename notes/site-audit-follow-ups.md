@@ -86,6 +86,23 @@ Lighthouse finds no contrast failures, but the 12px gold kickers and 60%-opacity
 background, especially on phones. Consider 13–14px kickers and about 70% opacity for `--muted`. That's a design call,
 so I left it.
 
+### 12a. Portfolio videos have no sound
+None of the seven self-hosted clips has an audio track; ffprobe shows video only:
+`80-level-mars-colony-interview/01.mp4`, `forever-reaching-out/01.mp4`, `jaguar-grill/02.mp4`,
+`mars-colony-outer-rim/01.mp4` and `springtime-in-the-west/01.mp4`, `09.mp4`, `10.mp4`. They came over from
+ArtStation, which typically stores uploaded clips as silent loops, so the sound can't be recovered from these files.
+The two YouTube embeds (Jaguar Grill and Trail of the Undead) do have sound.
+
+The player is ready for clips with sound. To add sound:
+1. Export the clip from your original project with audio: H.264 video, AAC audio, about 1920px wide. To keep the
+   file small, `ffmpeg -i in.mov -c:v libx264 -crf 23 -preset slow -c:a aac -b:a 128k -movflags +faststart out.mp4`.
+2. Replace the file in `frontend/public/portfolio/<slug>/`, keeping the name.
+3. Add `"audio": true` to that video's entry in `src/data/projects.json`.
+
+Clips still autoplay muted, because browsers block autoplay with sound, but a **Sound on** button appears on them.
+For a long piece that's mainly about the soundtrack, uploading it to YouTube and using a `youtube` entry is another
+option: it streams more efficiently and isn't bound to the 25 MB Pages file limit.
+
 ## Needs account access or a real device
 
 ### 12. Google Search Console and Bing Webmaster Tools
