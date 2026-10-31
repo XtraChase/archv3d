@@ -76,7 +76,8 @@ export function App() {
       <Header onContact={openContact} />
       <main>
         {route.page === 'project' ? (
-          <ProjectPage slug={route.slug} />
+          // Keyed by slug: each project starts fresh (players muted, lightbox closed) instead of reusing the last one.
+          <ProjectPage key={route.slug} slug={route.slug} />
         ) : (
           <HomePage availability={availability} onContact={openContact} />
         )}
