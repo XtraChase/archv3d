@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 // Decorative hero graphic: a twisting high-rise on a glazed podium, turning slowly, drawn in the site's gold on a
 // drafting grid. Plain canvas 2D (no 3D library). The tower is a stack of convex floor plates, so it draws correctly
 // with back-face culling and bottom-to-top order (the camera is always above). Pauses off screen and in background
-// tabs; a still frame for prefers-reduced-motion.
+// tabs. It always turns: it's part of the brand, so it deliberately ignores prefers-reduced-motion (the owner's call).
 
 type Vec = [number, number, number];
 type Point = [number, number];
@@ -431,7 +431,6 @@ export function HeroBuilding() {
     const context = element?.getContext('2d');
     if (!element || !context) return;
 
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
     let width = 0;
     let height = 0;
     let angle = -0.5;
@@ -464,7 +463,7 @@ export function HeroBuilding() {
       render();
     };
     const update = () => {
-      const run = started && visible && !document.hidden && !still.matches;
+      const run = started && visible && !document.hidden;
       if (run && !frame) {
         last = 0;
         frame = requestAnimationFrame(tick);
@@ -482,7 +481,6 @@ export function HeroBuilding() {
     });
     viewObserver.observe(element);
     document.addEventListener('visibilitychange', update);
-    still.addEventListener('change', update);
     // Nothing is drawn until the page has loaded and the browser is idle, so the drawing never competes with the page
     // itself; then it fades in (.hero-visual.is-ready) and starts turning.
     let idle = 0;
@@ -508,7 +506,6 @@ export function HeroBuilding() {
       sizeObserver.disconnect();
       viewObserver.disconnect();
       document.removeEventListener('visibilitychange', update);
-      still.removeEventListener('change', update);
     };
   }, []);
 
