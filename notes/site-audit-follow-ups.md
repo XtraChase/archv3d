@@ -88,7 +88,7 @@ so I left it.
 
 ### 12a. Portfolio videos have no sound
 None of the seven self-hosted clips has an audio track; ffprobe shows video only:
-`80-level-mars-colony-interview/01.mp4`, ~~`forever-reaching-out/01.mp4`~~ (replaced 2026-10-31 with the V3 render with sound), `jaguar-grill/02.mp4`,
+`80-level-mars-colony-interview/01.mp4`, ~~`forever-reaching-out/01.mp4`~~ (replaced 2026-10-31 by `01-v3.mp4`, the V3 render with sound), `jaguar-grill/02.mp4`,
 `mars-colony-outer-rim/01.mp4` and `springtime-in-the-west/01.mp4`, `09.mp4`, `10.mp4`. They came over from
 ArtStation, which typically stores uploaded clips as silent loops, so the sound can't be recovered from these files.
 The two YouTube embeds (Jaguar Grill and Trail of the Undead) do have sound.
@@ -96,7 +96,9 @@ The two YouTube embeds (Jaguar Grill and Trail of the Undead) do have sound.
 The player is ready for clips with sound. To add sound:
 1. Export the clip from your original project with audio: H.264 video, AAC audio, about 1920px wide. To keep the
    file small, `ffmpeg -i in.mov -c:v libx264 -crf 23 -preset slow -c:a aac -b:a 128k -movflags +faststart out.mp4`.
-2. Replace the file in `frontend/public/portfolio/<slug>/`, keeping the name.
+2. Put the file in `frontend/public/portfolio/<slug>/` under a **new name** (e.g. `01-v2.mp4`) and update its `src` in
+   `projects.json`. Files under `/portfolio/` are cached for 7 days by Cloudflare's edge and by browsers, so a file
+   replaced under the same name keeps serving the old copy.
 3. Add `"audio": true` to that video's entry in `src/data/projects.json`.
 
 Clips still autoplay muted, because browsers block autoplay with sound, but a **Sound on** button appears on them.
