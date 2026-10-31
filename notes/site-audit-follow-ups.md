@@ -87,10 +87,13 @@ background, especially on phones. Consider 13–14px kickers and about 70% opaci
 so I left it.
 
 ### 12a. Portfolio videos have no sound
-None of the seven self-hosted clips has an audio track; ffprobe shows video only:
-`80-level-mars-colony-interview/01.mp4`, ~~`forever-reaching-out/01.mp4`~~ (replaced 2026-10-31 by `01-v3.mp4`, the V3 render with sound), `jaguar-grill/02.mp4`,
-`mars-colony-outer-rim/01.mp4` and `springtime-in-the-west/01.mp4`, `09.mp4`, `10.mp4`. They came over from
-ArtStation, which typically stores uploaded clips as silent loops, so the sound can't be recovered from these files.
+The self-hosted clips came over from ArtStation without an audio track (ffprobe showed video only). Status:
+- **Replaced with sound (2026-10-31):** `forever-reaching-out/01-v3.mp4`, `mars-colony-outer-rim/01-v2.mp4`,
+  `springtime-in-the-west/01-v2.mp4`.
+- **Still silent:** `80-level-mars-colony-interview/01.mp4`, `jaguar-grill/02.mp4`, `springtime-in-the-west/09.mp4` and
+  `10.mp4` (the two short clips).
+
+ArtStation typically stores uploaded clips as silent loops, so the sound has to come from the original renders.
 The two YouTube embeds (Jaguar Grill and Trail of the Undead) do have sound.
 
 The player is ready for clips with sound. To add sound:

@@ -248,9 +248,10 @@
     "media": [
       {
         "width": 1920,
-        "height": 814,
+        "height": 816,
         "type": "video",
-        "src": "portfolio/springtime-in-the-west/01.mp4",
+        "src": "portfolio/springtime-in-the-west/01-v2.mp4",
+        "audio": true,
         "poster": "portfolio/springtime-in-the-west/01.webp"
       },
       {
@@ -417,7 +418,8 @@
         "width": 1920,
         "height": 814,
         "type": "video",
-        "src": "portfolio/mars-colony-outer-rim/01.mp4",
+        "src": "portfolio/mars-colony-outer-rim/01-v2.mp4",
+        "audio": true,
         "poster": "portfolio/mars-colony-outer-rim/01.webp"
       },
       {
