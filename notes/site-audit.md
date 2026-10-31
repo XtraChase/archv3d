@@ -101,6 +101,24 @@ violations.
 | 5.6 | No links to ArtStation, LinkedIn, YouTube or the 80 Level article. | **Follow-up.** Needs your URLs. |
 | 5.7 | `www.archv3d.com` didn't resolve from the test environment. | **Follow-up.** Check DNS and redirects. |
 
+## 6. Copy and spelling
+
+All visible text was checked: the home page, every project page, image and video labels, the contact form and the
+experience page, plus the interface strings in the code. A spell checker found no misspelled words; everything it
+flagged was a brand, a proper noun or an industry term (Revit, Bozeman, tileable…). Reading the text turned up four
+errors:
+
+| # | Where | Was | Now | Status |
+|---|---|---|---|---|
+| 6.1 | As-Built Residence card subtitle (`public/config.js`) | "Two-**storey** family home" | "Two-**story** family home" | **Done.** "Storey" is the British spelling; the rest of the site uses American English. |
+| 6.2 | Mars Colony Outer Rim description (`projects.json`) | "Life on **mars**" | "Life on **Mars**" | **Done.** |
+| 6.3 | 80 Level Interview description (`projects.json`) | "my **mars** colony environment" | "my **Mars** colony environment" | **Done.** |
+| 6.4 | Springtime In The West description (`projects.json`) | "once the snow melts and **Spring** has finally come" | "…and **spring** has finally come" | **Done.** Seasons aren't capitalized mid-sentence. |
+| 6.5 | Hero headline (`HomePage.tsx`) | "Architecture you can *walk through.*" | "Architecture in *Motion*" | **Done** (requested). The browser tab title stays "archv3d · Chase Richards". |
+
+These project descriptions were carried over from the old ArtStation portfolio, so the ArtStation copies probably
+have the same errors.
+
 ## Files changed
 
 - `frontend/index.html`: head tags (canonical, Open Graph, JSON-LD, icons); Google Fonts removed; `config.js` deferred.
@@ -115,3 +133,4 @@ violations.
 - `frontend/public/`: `_headers`, `404.html`, `robots.txt`, `sitemap.xml`, icons, manifest, new WebP images.
 - `frontend/package.json`, `package-lock.json`: `@fontsource/inter`, `@fontsource/instrument-serif`.
 - `README.md`, `PLAN.md`: documentation.
+- Copy: `src/home/HomePage.tsx` (headline), `public/config.js` and `src/data/projects.json` (spelling).

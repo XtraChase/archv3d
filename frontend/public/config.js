@@ -33,7 +33,7 @@ window.ARCHVIZ_CONFIG = {
     {
       id: 'house',
       title: 'As-Built Residence',
-      subtitle: 'Two-storey family home',
+      subtitle: 'Two-story family home',
       description: 'A furnished house on a wooded lot: living room, kitchen, dining, bedrooms and the back yard patio.',
       image: 'levels/house.webp',
       imageSrcset: 'levels/house-640.webp 640w, levels/house.webp 1280w'

@@ -24,7 +24,7 @@ function Hero() {
           {profile.name} · {profile.role}
         </p>
         <h1 className="hero-title">
-          Architecture you can <em>walk through.</em>
+          Architecture in <em>Motion</em>
         </h1>
         <p className="hero-lede">
           {settings.subtitle || 'Interactive architecture, streamed live from Unreal Engine'}. Open a project in your
