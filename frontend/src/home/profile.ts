@@ -5,11 +5,9 @@ export const profile = {
   location: 'Bozeman, Montana',
   email: 'james.chase.richards@gmail.com',
   summary:
-    'Results-driven professional with a proven track record in aligning business strategy with project objectives to ' +
-    'drive successful program development. Expertise includes business development, digital arts, web development, ' +
-    'application programming, troubleshooting, media production, and cross-team collaboration. Recognized for being a ' +
-    'solutions-focused team player with exceptional interpersonal, communication, and organizational skills, dedicated ' +
-    'to delivering high-quality outcomes.',
+    'With deep expertise in architectural CAD, BIM workflows, and advanced 3D visualization, I help architects, ' +
+    'developers, and homeowners transform complex blueprints into clear, immersive spatial experiences. Every ' +
+    'rendering and walkthrough is crafted with design intent, structural accuracy, and visual impact in mind.',
   skills: ['3D Modeling', 'Architectural Visualization', 'Product Design', 'Architectural Design'],
   software: [
     'Revit',

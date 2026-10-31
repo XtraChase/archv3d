@@ -39,7 +39,7 @@ I left it alone because it's a host-specific special case in code you've kept ho
 
 ## Needs your content or source files
 
-### 5. Replace the About summary (`src/home/profile.ts`)
+### 5. ~~Replace the About summary~~ (done 2026-10-31 with your text; the draft below is kept for reference)
 The current text ("Results-driven professional with a proven track record in aligning business strategy…") is
 generic résumé language that could describe anyone, and it undersells the work on the page. Here's a draft built only
 from facts on the site. Please check it and adjust in your own voice:
@@ -69,7 +69,7 @@ Add ArtStation, LinkedIn, YouTube and the 80 Level article to the About section 
 in the `Person` JSON-LD in `index.html`. That ties the site to your existing reputation for search engines. I didn't
 guess the URLs.
 
-### 9. A visual hero
+### 9. ~~A visual hero~~ (done 2026-10-31: a turning building model, `src/home/HeroBuilding.tsx`; a rendered clip is still an option)
 On desktop the first screen is a headline and two buttons, with the right half empty. For an archviz studio the first
 thing a visitor sees should be the work: a muted looping clip (about 5–10 s, under 2 MB, with a WebP poster) or a still
 from the Movie Studio level, on the right or behind the text. You'd need to render or choose the clip. The code is
@@ -89,8 +89,9 @@ so I left it.
 ### 12a. Portfolio videos have no sound
 The self-hosted clips came over from ArtStation without an audio track (ffprobe showed video only). Status:
 - **Replaced with sound (2026-10-31):** `forever-reaching-out/01-v3.mp4`, `mars-colony-outer-rim/01-v2.mp4`,
-  `springtime-in-the-west/01-v2.mp4`.
-- **Still silent:** `80-level-mars-colony-interview/01.mp4`, `jaguar-grill/02.mp4`, `springtime-in-the-west/09.mp4` and
+  `springtime-in-the-west/01-v2.mp4`. The 80 Level page showed the same Mars footage, so it now uses
+  `mars-colony-outer-rim/01-v2.mp4` too (its silent copy was removed).
+- **Still silent:** `jaguar-grill/02.mp4`, `springtime-in-the-west/09.mp4` and
   `10.mp4` (the two short clips).
 
 ArtStation typically stores uploaded clips as silent loops, so the sound has to come from the original renders.

@@ -4,6 +4,7 @@ import { coverSrcSet, formatPublished, hasMotion, projectLabel, projects, type P
 import { href } from './routing';
 import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
+import { HeroBuilding } from './HeroBuilding';
 
 export function HomePage({ availability, onContact }: { availability: Availability; onContact: () => void }) {
   return (
@@ -19,6 +20,7 @@ export function HomePage({ availability, onContact }: { availability: Availabili
 function Hero() {
   return (
     <section className="hero">
+      <HeroBuilding />
       <div className="hero-inner">
         <p className="kicker">
           {profile.name} · {profile.role}
