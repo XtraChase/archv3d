@@ -39,8 +39,10 @@ export interface Project {
   categories: string[];
   software: string[];
   mediums: string[];
-  /** Card image, relative to the site root. */
+  /** Card image, relative to the site root, 960px wide. */
   cover: string;
+  /** The same image 1600px wide, for wide cards and high-density screens. */
+  coverLarge?: string;
   media: Media[];
 }
 
@@ -58,6 +60,11 @@ export function formatPublished(published: string, month: 'long' | 'short' = 'lo
 
 export function hasMotion(project: Project) {
   return project.media.some((item) => item.type !== 'image');
+}
+
+/** srcset for a project's cover: both sizes when there's a large one. */
+export function coverSrcSet(project: Project) {
+  return project.coverLarge ? `${project.cover} 960w, ${project.coverLarge} 1600w` : undefined;
 }
 
 /** Short label for a card: the first category, else the mediums. */

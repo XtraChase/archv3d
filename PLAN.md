@@ -464,3 +464,17 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     20 min if the sync never finishes). Servers zip tested locally: 46.5 MB, no secrets, signalling server loads after
     extract + junctions. Tunnel on the VM: TUNNEL_CRED_FILE=servers\tunnel-credentials.json (env beats the yml path).
   - Cost estimate (not verified on the price list): ~$0.65/h spot incl. Windows + vWS licences, disk ~$10-15/month.
+- 2026-10-31 SITE AUDIT FIXES (performance, SEO, accessibility, headers); full list in notes/site-audit.md:
+  - Fonts self-hosted from @fontsource (Latin subsets, only the weights home.css uses), the three first-screen faces
+    preloaded by a small Vite plugin; fonts are never inlined as base64. config.js loads with `defer`.
+  - index.html: canonical, Open Graph/Twitter tags (og:image = levels/studio.jpg), JSON-LD WebSite + Person, icons and
+    manifest. public/: robots.txt, sitemap.xml, favicon.svg/.ico, touch icons, 404.html (Pages then answers 404 for
+    unknown paths instead of the home page).
+  - Images: levels/*.webp at 1280 and 640 with srcset; projects get `coverLarge` (1600px, cut from the matching gallery
+    original) used through srcset/sizes, so the full-width card is no longer upscaled.
+  - Per-route meta description/og tags; alt text and labels for gallery images, videos and the lightbox; plain
+    accessible names on experience cards. explore.html no longer disables zoom: #stage has touch-action: none instead.
+  - _headers: HSTS, X-Frame-Options SAMEORIGIN, Permissions-Policy, a report-only CSP, no wildcard CORS, /levels cached.
+  - Tested with `wrangler pages dev` on the old and new builds: Lighthouse mobile performance 80-81 -> 96-98, SEO 92 ->
+    100, FCP ~2.7 s -> ~1.7 s, page weight 771 -> 669 KiB; a Playwright check of the build served as archv3d.com
+    passed 37/37 with no CSP violations; screenshots identical.

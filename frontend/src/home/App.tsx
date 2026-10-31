@@ -10,6 +10,19 @@ import { profile } from './profile';
 
 const brand = settings.title || 'archv3d';
 
+// The description in index.html, used for the home page and as the fallback for projects without one.
+const siteDescription = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '';
+
+function setMeta(selector: string, content: string) {
+  document.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', content);
+}
+
+/** Up to about 160 characters of a project's first paragraph, cut at a word. */
+function summarize(text: string) {
+  if (text.length <= 160) return text;
+  return text.slice(0, 157).replace(/\s+\S*$/, '') + '…';
+}
+
 function routeKey(route: Route) {
   return route.page === 'project' ? `work/${route.slug}` : 'home';
 }
@@ -39,9 +52,19 @@ export function App() {
     }
   }, [route, key]);
 
+  // Title and description per page, for browser tabs, history and search engines that run scripts.
   useEffect(() => {
     const project = route.page === 'project' ? findProject(route.slug) : undefined;
-    document.title = project ? `${project.title} · ${profile.name}` : `${brand} · ${profile.name}`;
+    const title = project ? `${project.title} · ${profile.name}` : `${brand} · ${profile.name}`;
+    const description = project?.description[0]
+      ? summarize(project.description[0])
+      : project
+        ? `${project.title}: ${[...project.categories, ...project.mediums].join(', ')} by ${profile.name}.`
+        : siteDescription;
+    document.title = title;
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', description);
   }, [route]);
 
   const [contactOpen, setContactOpen] = useState(false);

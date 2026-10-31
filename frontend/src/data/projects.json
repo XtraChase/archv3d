@@ -11,6 +11,7 @@
       "Digital 3D"
     ],
     "cover": "portfolio/madison-ridge-outdoor-kitchen/cover.webp",
+    "coverLarge": "portfolio/madison-ridge-outdoor-kitchen/cover-1600.webp",
     "media": [
       {
         "width": 1920,
@@ -96,6 +97,7 @@
       "Digital 3D"
     ],
     "cover": "portfolio/my-work-in-revit/cover.webp",
+    "coverLarge": "portfolio/my-work-in-revit/cover-1600.webp",
     "media": [
       {
         "width": 1920,
@@ -200,6 +202,7 @@
       "Real-time"
     ],
     "cover": "portfolio/trail-of-the-undead/cover.webp",
+    "coverLarge": "portfolio/trail-of-the-undead/cover-1600.webp",
     "media": [
       {
         "width": 1920,
@@ -241,6 +244,7 @@
       "Real-time"
     ],
     "cover": "portfolio/springtime-in-the-west/cover.webp",
+    "coverLarge": "portfolio/springtime-in-the-west/cover-1600.webp",
     "media": [
       {
         "width": 1920,
@@ -407,6 +411,7 @@
       "Animation"
     ],
     "cover": "portfolio/mars-colony-outer-rim/cover.webp",
+    "coverLarge": "portfolio/mars-colony-outer-rim/cover-1600.webp",
     "media": [
       {
         "width": 1920,
@@ -474,6 +479,7 @@
       "Animation"
     ],
     "cover": "portfolio/forever-reaching-out/cover.webp",
+    "coverLarge": "portfolio/forever-reaching-out/cover-1600.webp",
     "media": [
       {
         "width": 1920,

@@ -21,6 +21,8 @@ html, body {
   background: #000;
   -webkit-user-select: none;
   user-select: none;
+  /* Pinch zoom works on the menus; no double-tap zoom delay on buttons. */
+  touch-action: manipulation;
 }
 
 button {
@@ -38,6 +40,8 @@ button {
 #stage {
   position: fixed;
   inset: 0;
+  /* Drags and pinches on the stream steer the camera instead of scrolling or zooming the page. */
+  touch-action: none;
 }
 #stage video {
   object-fit: cover;

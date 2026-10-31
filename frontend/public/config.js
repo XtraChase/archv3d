@@ -27,14 +27,16 @@ window.ARCHVIZ_CONFIG = {
       title: 'Movie Studio',
       subtitle: 'Production campus',
       description: 'A furnished office and studio building on a landscaped hillside, with a courtyard and an overlook trail.',
-      image: 'levels/studio.jpg'
+      image: 'levels/studio.webp',
+      imageSrcset: 'levels/studio-640.webp 640w, levels/studio.webp 1280w'
     },
     {
       id: 'house',
       title: 'As-Built Residence',
       subtitle: 'Two-storey family home',
       description: 'A furnished house on a wooded lot: living room, kitchen, dining, bedrooms and the back yard patio.',
-      image: 'levels/house.jpg'
+      image: 'levels/house.webp',
+      imageSrcset: 'levels/house-640.webp 640w, levels/house.webp 1280w'
     }
   ]
 };

@@ -1,6 +1,6 @@
 import { levels, levelUrl, settings, type LevelConfig } from '../site';
 import { availabilityLabel, type Availability } from './availability';
-import { formatPublished, hasMotion, projectLabel, projects, type Project } from './projects';
+import { coverSrcSet, formatPublished, hasMotion, projectLabel, projects, type Project } from './projects';
 import { href } from './routing';
 import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
@@ -77,6 +77,8 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
         {level.image && (
           <img
             src={level.image}
+            srcSet={level.imageSrcset}
+            sizes="(max-width: 900px) 100vw, 600px"
             alt=""
             loading="lazy"
             width={1280}
@@ -107,12 +109,15 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
   // While the stream is switched off there is nothing to connect to, so the card isn't a link. Asleep or starting,
   // the experience page wakes the cloud VM and joins the line by itself once it's up.
   const waking = availability.status === 'asleep' || availability.status === 'starting';
+  // The card's text runs together when read as one link ("Available Now01Movie Studio…"), so name it plainly; the
+  // status badge inside still announces changes on its own.
+  const label = `${level.title}: ${ACTION_TEXT[availability.status] ?? 'Enter experience'}`;
   return unavailable ? (
     <article className="experience-card is-unavailable" aria-disabled="true">
       {content}
     </article>
   ) : (
-    <a className="experience-card" href={levelUrl(level.id, { wake: waking })}>
+    <a className="experience-card" href={levelUrl(level.id, { wake: waking })} aria-label={label}>
       {content}
     </a>
   );
@@ -142,19 +147,31 @@ function Portfolio() {
         </p>
       </div>
       <div className="work-grid">
-        {projects.map((project) => (
-          <WorkCard key={project.slug} project={project} />
+        {projects.map((project, index) => (
+          <WorkCard key={project.slug} project={project} index={index} />
         ))}
       </div>
     </section>
   );
 }
 
-function WorkCard({ project }: { project: Project }) {
+/**
+ * Rendered width of a portfolio card, for the browser to pick a cover size. Mirrors .work-grid in home.css: a 12-column
+ * row pattern of 7/5, 4/4/4, 5/7, then a full-width card; two columns (every third card full width) up to 900px; one
+ * column up to 640px.
+ */
+function workCardSizes(index: number) {
+  const span = [7, 5, 4, 4, 4, 5, 7, 12][index % 8];
+  const tablet = index % 3 === 0 ? '100vw' : '50vw';
+  return `(max-width: 640px) 100vw, (max-width: 900px) ${tablet}, min(${Math.round((span / 12) * 100)}vw, ${Math.round((1160 * span) / 12)}px)`;
+}
+
+function WorkCard({ project, index }: { project: Project; index: number }) {
+  const srcSet = coverSrcSet(project);
   return (
     <a className="work-card" href={href.project(project.slug)}>
       <div className="work-media">
-        <img src={project.cover} alt="" loading="lazy" />
+        <img src={project.cover} srcSet={srcSet} sizes={srcSet && workCardSizes(index)} alt="" loading="lazy" />
         {hasMotion(project) && (
           <span className="work-motion">
             <PlayIcon /> Video

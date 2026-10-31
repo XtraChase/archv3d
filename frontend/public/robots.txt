@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://archv3d.com/sitemap.xml

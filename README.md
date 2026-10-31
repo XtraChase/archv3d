@@ -9,7 +9,8 @@ whichever level the current visitor picked.
   `index.html` is the home page in React (`src/home/`): the live experiences with an availability badge on each, then the
   portfolio (`src/data/projects.json`, media in `public/portfolio/`) and about; `explore.html?level=<id>` the experience
   (views, orbit/walk, time of day, weather, switching level, queue). Runtime settings and the level list are in
-  `frontend/public/config.js`; card images in `frontend/public/levels/<id>.jpg`. To add a level: add it to
+  `frontend/public/config.js`; card images in `frontend/public/levels/<id>.webp` (plus a `-640.webp` for small screens,
+  listed in `imageSrcset`; the `.jpg` stays as the link-preview image). To add a level: add it to
   `AArchVizPlayerController::Levels` (C++) and `MapsToCook`, give the map `ArchVizGameMode` and `AArchVizCameraPoint`
   hotspots, then list it in `config.js` with the same id.
 - `contact/` – the contact form backend: a Cloudflare Worker (`archv3d-contact`) that emails each message from the

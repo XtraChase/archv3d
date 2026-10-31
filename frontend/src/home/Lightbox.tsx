@@ -4,13 +4,15 @@ import { ChevronIcon, CloseIcon } from './icons';
 
 interface Props {
   images: ImageMedia[];
+  /** Text alternative for an image. */
+  altFor: (image: ImageMedia) => string;
   index: number;
   onIndex: (index: number) => void;
   onClose: () => void;
 }
 
 /** Full-screen image viewer: arrow keys or buttons to step through, Escape or a click outside to close. */
-export function Lightbox({ images, index, onIndex, onClose }: Props) {
+export function Lightbox({ images, altFor, index, onIndex, onClose }: Props) {
   const close = useRef<HTMLButtonElement>(null);
   const count = images.length;
   const step = (delta: number) => onIndex((index + delta + count) % count);
@@ -38,7 +40,7 @@ export function Lightbox({ images, index, onIndex, onClose }: Props) {
   const image = images[index];
   return (
     <div className="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" onClick={onClose}>
-      <img src={image.src} alt={image.caption ?? ''} onClick={(event) => event.stopPropagation()} />
+      <img src={image.src} alt={altFor(image)} onClick={(event) => event.stopPropagation()} />
       <button ref={close} className="lightbox-button lightbox-close" onClick={onClose} aria-label="Close">
         <CloseIcon />
       </button>

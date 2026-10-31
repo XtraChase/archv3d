@@ -9,13 +9,52 @@
       content="Interactive architecture streamed live from Unreal Engine, and the portfolio of Chase Richards, technical artist and CAD drafter."
     />
     <meta name="theme-color" content="#0f1013" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap"
+    <link rel="canonical" href="https://archv3d.com/" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
+
+    <!-- Link previews (LinkedIn, Slack, iMessage, X). Absolute URLs: scrapers don't resolve relative ones. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="archv3d" />
+    <meta property="og:url" content="https://archv3d.com/" />
+    <meta property="og:title" content="archv3d · Chase Richards" />
+    <meta
+      property="og:description"
+      content="Interactive architecture streamed live from Unreal Engine, and the portfolio of Chase Richards, technical artist and CAD drafter."
     />
-    <script src="./config.js"></script>
+    <meta property="og:image" content="https://archv3d.com/levels/studio.jpg" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="Movie Studio, a production campus on a landscaped hillside, rendered in Unreal Engine" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://archv3d.com/#website",
+            "url": "https://archv3d.com/",
+            "name": "archv3d",
+            "description": "Interactive architecture streamed live from Unreal Engine.",
+            "author": { "@id": "https://archv3d.com/#chase" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://archv3d.com/#chase",
+            "name": "Chase Richards",
+            "jobTitle": "Technical Artist & CAD Drafter",
+            "url": "https://archv3d.com/",
+            "address": { "@type": "PostalAddress", "addressLocality": "Bozeman", "addressRegion": "MT", "addressCountry": "US" },
+            "knowsAbout": ["Architectural visualization", "Unreal Engine", "Revit", "CAD drafting", "3D modeling", "Product design"]
+          }
+        ]
+      }
+    </script>
+    <script defer src="./config.js"></script>
   </head>
   <body class="home">
     <div id="root"></div>
