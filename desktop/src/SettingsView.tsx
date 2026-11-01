@@ -156,6 +156,12 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
 
         {editing && !generated && (
           <>
+            {settings.tokenUnreadable && (
+              <p className="banner banner-error">
+                A token is saved, but Windows won't let this app read it (it was saved under a different Windows session). Paste it
+                again or generate a new one.
+              </p>
+            )}
             <p>
               <button className="button" onClick={generate}>
                 Generate a new token

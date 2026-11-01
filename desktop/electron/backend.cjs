@@ -45,10 +45,13 @@ function adminToken(config = readConfig()) {
   }
 }
 
-/** Settings for the renderer: never the token itself, only whether one is set. */
+/** Settings for the renderer: never the token itself, only whether one is set. A token saved but decrypting to
+ * nothing was encrypted under another Windows session's key (safeStorage then returns '' instead of failing). */
 function publicSettings() {
-  const { adminToken: _token, seenLeadId: _lead, seenOrganizations: _orgs, ...rest } = readConfig();
-  return { ...rest, hasAdminToken: Boolean(adminToken()) };
+  const config = readConfig();
+  const { adminToken: _token, seenLeadId: _lead, seenOrganizations: _orgs, ...rest } = config;
+  const readable = Boolean(adminToken(config));
+  return { ...rest, hasAdminToken: readable, tokenUnreadable: Boolean(config.adminToken) && !readable };
 }
 
 function saveSettings(changes) {

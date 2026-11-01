@@ -114,6 +114,8 @@ export interface Settings {
   notifyOrganizations: boolean;
   startWithWindows: boolean;
   hasAdminToken: boolean;
+  /** A token is saved but this Windows session can't decrypt it. */
+  tokenUnreadable?: boolean;
 }
 
 export interface Api {
