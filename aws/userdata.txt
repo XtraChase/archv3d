@@ -1,0 +1,9 @@
+<powershell>
+# EC2 user data for the archv3d-stream instance (create-instance.ps1 fills in __BUCKET__). Runs at every boot
+# (persist): fetches the current aws\vm-startup.ps1 from the bucket and runs it.
+$ErrorActionPreference = 'Stop'
+New-Item -ItemType Directory -Force C:\archv3d | Out-Null
+Read-S3Object -BucketName '__BUCKET__' -Key 'web/aws/vm-startup.ps1' -File 'C:\archv3d\vm-startup.ps1' -Region us-west-2 | Out-Null
+& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File 'C:\archv3d\vm-startup.ps1' -Bucket '__BUCKET__'
+</powershell>
+<persist>true</persist>

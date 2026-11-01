@@ -90,6 +90,27 @@ try {
     Register-ScheduledTask archv3d-stream -Action $action -Trigger $trigger -Principal $principal -Settings $settings | Out-Null
   }
 
+  # ---- Logs from before this boot -----------------------------------------------------------------
+  # Game, gateway and boot logs plus Windows application errors from the last 3 hours, to gs://<bucket>/logs/boot-*/
+  # (the VM may only add files under logs/). Covers runs that crashed or hung, whatever state the session was in.
+  $since = (Get-Date).AddHours(-3)
+  $prev = "$env:TEMP\archv3d-prev-logs"
+  Remove-Item -Recurse -Force $prev -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force $prev | Out-Null
+  Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Level = 1, 2, 3; StartTime = $since } -ErrorAction SilentlyContinue |
+    Format-List TimeCreated, ProviderName, Id, LevelDisplayName, Message | Out-File -Encoding utf8 "$prev\app-events.log"
+  Get-WinEvent -FilterHashtable @{ LogName = 'System'; Level = 1, 2, 3; StartTime = $since } -ErrorAction SilentlyContinue |
+    Format-List TimeCreated, ProviderName, Id, Message | Out-File -Encoding utf8 "$prev\system-errors.log"
+  Get-ChildItem "$Build\Movie_Studio\Saved\Logs\*.log", "$Web\servers\gateway.log", "$Root\log-upload.log", "$Root\monitor.log" -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -gt $since } | Copy-Item -Destination $prev -ErrorAction SilentlyContinue
+  Get-ChildItem "$Build\Movie_Studio\Saved\Crashes" -Recurse -Include *.log, *.runtime-xml -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -gt $since } |
+    ForEach-Object { Copy-Item $_.FullName "$prev\crash-$($_.Directory.Name)-$($_.Name)" -ErrorAction SilentlyContinue }
+  if (Get-ChildItem $prev) {
+    Log 'uploading logs from before this boot'
+    try { GCloud storage cp "$prev\*" "gs://$bucket/logs/boot-$(Get-Date -Format 'yyyyMMdd-HHmmss')/" } catch { Log "log upload failed: $_" }
+  }
+
   # ---- Sync from the bucket ----------------------------------------------------------------------
   Log 'syncing the build'
   GCloud storage rsync --recursive --delete-unmatched-destination-objects "gs://$bucket/build" $Build

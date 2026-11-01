@@ -52,7 +52,10 @@ const MAX_LAUNCHES = 5;
 const LAUNCH_WINDOW_MINUTES = 15;
 const PAUSE_MINUTES = 10;
 
-// --log_file (cloud VM): also append to a file, which cloud\run-stream.ps1 uploads for debugging.
+// --game_args "<args>": extra command-line arguments for the game (cloud VM experiments, set through instance
+// metadata by cloud\stream-session.ps1, e.g. "-nosound").
+const GAME_ARGS = arg('game_args', '').split(/\s+/).filter(Boolean);
+// --log_file (cloud VM): also append to a file, which the cloud scripts upload for debugging.
 const LOG_FILE = arg('log_file', '');
 const log = (...parts) => {
   const line = [new Date().toISOString(), ...parts].join(' ');
@@ -210,8 +213,10 @@ function launchGame() {
     '-unattended',
     // Silent on this PC's speakers (Windows volume mixer); the stream still carries the game's audio.
     '-ArchVizMuteLocalAudio',
-    `-PixelStreamingConnectionURL=ws://127.0.0.1:${STREAMER_PORT}`
+    `-PixelStreamingConnectionURL=ws://127.0.0.1:${STREAMER_PORT}`,
+    ...GAME_ARGS
   ];
+  if (GAME_ARGS.length) log(`launching the game with extra arguments: ${GAME_ARGS.join(' ')}`);
   // Detached, so the game keeps running if the gateway's window is closed (stop_experience.bat stops both).
   spawn(GAME, args, { detached: true, stdio: 'ignore' }).unref();
   launches.push(Date.now());

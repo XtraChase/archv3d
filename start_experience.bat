@@ -18,6 +18,9 @@ for %%a in (%*) do (
   if /i "%%~a"=="windowed" set WINDOWED=--windowed
   if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15 --log_file "%ROOT%servers\gateway.log"
 )
+rem Extra game arguments for experiments on the cloud VM (cloud\stream-session.ps1 sets it from instance metadata).
+set GAME_ARGS=
+if defined ARCHVIZ_GAME_ARGS set GAME_ARGS=--game_args "%ARCHVIZ_GAME_ARGS%"
 set GAME=%ROOT%..\Packaged\Windows\Movie_Studio.exe
 set PLAYER_PORT=80
 rem Signalling server's own player/web port; only the gateway should use it.
@@ -40,9 +43,9 @@ call "%ROOT%stop_experience.bat" >nul
 
 rem On this PC: switch the on-demand cloud stream off first, since both would run the same Cloudflare tunnel.
 rem (Needs gcloud signed in; silently skipped where it isn't, and never on the VM itself.)
-if not defined CLOUD if exist "%ROOT%cloud\stream-off.ps1" (
+if not defined CLOUD if exist "%ROOT%aws\stream-off.ps1" (
   echo Switching the cloud stream off while this PC streams...
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%cloud\stream-off.ps1" >nul 2>&1
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%aws\stream-off.ps1" >nul 2>&1
 )
 
 rem ICE servers for browsers and Unreal: Cloudflare TURN credentials if servers\turn.env exists, else STUN only.
@@ -59,7 +62,7 @@ rem size, capped by maxStreamResolution in config.js) and restarts it if it cras
 rem The game log still goes to Saved\Logs\Movie_Studio.log.
 start "ArchViz gateway" /D "%ROOT%servers" node gateway.mjs --port %PLAYER_PORT% --upstream %SIGNALLING_PORT% ^
   --session_minutes 10 --idle_minutes_waiting 3 --idle_minutes_alone 15 ^
-  --game "%GAME%" --streamer_port %STREAMER_PORT% %WINDOWED% %CLOUD%
+  --game "%GAME%" --streamer_port %STREAMER_PORT% %WINDOWED% %CLOUD% %GAME_ARGS%
 
 rem Public https/wss://archv3d.com (and stream.archv3d.com) -> gateway (named Cloudflare tunnel, see servers\cloudflared.yml).
 set CLOUDFLARED=%ProgramFiles(x86)%\cloudflared\cloudflared.exe

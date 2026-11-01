@@ -1,16 +1,16 @@
-// Wake/status service for the on-demand cloud stream: tells archv3d.com whether the Google Cloud VM is off, asleep,
+// Wake/status service for the on-demand cloud stream: tells archv3d.com whether the AWS instance is off, asleep,
 // starting or running, and starts it when a visitor asks. Deployed by Cloudflare Workers Builds from this folder
-// (root directory "control"). Secret GCP_SA_KEY: JSON key of a service account that may only get/start the VM.
+// (root directory "control"). Secrets AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY: access key of the IAM user
+// archv3d-control, which may only describe instances and start the one named below.
 {
   "name": "archv3d-control",
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
   "workers_dev": true,
-  // Logs in the dashboard (Workers > archv3d-control > Observability), e.g. a failed Google API call.
+  // Logs in the dashboard (Workers > archv3d-control > Observability), e.g. a failed AWS API call.
   "observability": { "enabled": true },
   "vars": {
-    "GCP_PROJECT": "archv3d-stream",
-    "GCP_ZONE": "us-central1-a",
-    "GCP_INSTANCE": "archv3d-stream"
+    "AWS_REGION": "us-west-2",
+    "INSTANCE_NAME": "archv3d-stream"
   }
 }

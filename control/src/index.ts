@@ -1,23 +1,27 @@
+// Wake/status service for the on-demand AWS instance (aws/ in the repo).
 // GET  /status  {status: 'off' | 'asleep' | 'starting' | 'running'}
-//   off       waking disabled (VM label archv3d-wake != on, set by the desktop Stop shortcut) or not configured
-//   asleep    allowed, VM stopped; POST /wake starts it
-//   starting  VM booting (the stream comes up a few minutes later on stream.archv3d.com)
-//   running   VM up; the page then talks to the gateway itself
-// POST /wake    starts the VM when it is asleep. The VM powers itself off when idle (gateway --idle_shutdown_minutes).
+//   off       waking disabled (instance tag archv3d-wake != on, set by the desktop Stop shortcut) or not configured
+//   asleep    allowed, instance stopped; POST /wake starts it
+//   starting  instance booting (the stream comes up a few minutes later on stream.archv3d.com)
+//   running   instance up; the page then talks to the gateway itself
+// POST /wake    starts the instance when it is asleep. It powers itself off when idle (gateway --idle_shutdown_minutes).
+import { AwsClient } from 'aws4fetch';
 
 interface Env {
-  GCP_PROJECT: string;
-  GCP_ZONE: string;
-  GCP_INSTANCE: string;
-  /** Service account JSON key (Worker secret). */
-  GCP_SA_KEY?: string;
+  AWS_REGION: string;
+  /** Name tag of the instance (its id changes if it is recreated). */
+  INSTANCE_NAME: string;
+  /** Access key of an IAM user that may only describe instances and start this one (Worker secrets). */
+  AWS_ACCESS_KEY_ID?: string;
+  AWS_SECRET_ACCESS_KEY?: string;
 }
 
 type Status = 'off' | 'asleep' | 'starting' | 'running';
 
 interface Instance {
-  status: string;
-  labels?: Record<string, string>;
+  id: string;
+  state: string;
+  wake: string;
 }
 
 function allowedOrigin(origin: string | null) {
@@ -45,128 +49,65 @@ function reply(body: object, status: number, origin: string | null) {
   return new Response(JSON.stringify(body), { status, headers });
 }
 
-// ---- Google auth: service account JWT -> OAuth access token, cached per isolate -------------------
+// ---- EC2 (query API, signed with SigV4) ------------------------------------------------------------
 
-let token: { value: string; expires: number } | null = null;
-
-const base64url = (data: ArrayBuffer | string) =>
-  btoa(typeof data === 'string' ? data : String.fromCharCode(...new Uint8Array(data)))
-    .replace(/=+$/, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-/** The first complete {...} in the text, e.g. when the key file was pasted twice in a row. */
-function firstJsonObject(text: string) {
-  let depth = 0;
-  let inString = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inString) {
-      if (c === '\\') i++;
-      else if (c === '"') inString = false;
-    } else if (c === '"') inString = true;
-    else if (c === '{') depth++;
-    else if (c === '}' && --depth === 0) return text.slice(0, i + 1);
-  }
+async function ec2(env: Env, params: Record<string, string>) {
+  const client = new AwsClient({
+    accessKeyId: env.AWS_ACCESS_KEY_ID!.trim(),
+    secretAccessKey: env.AWS_SECRET_ACCESS_KEY!.trim(),
+    service: 'ec2',
+    region: env.AWS_REGION
+  });
+  const url = new URL(`https://ec2.${env.AWS_REGION}.amazonaws.com/`);
+  url.search = new URLSearchParams({ Version: '2016-11-15', ...params }).toString();
+  const response = await client.fetch(url.href);
+  const text = await response.text();
+  if (!response.ok) throw new Error(`EC2 ${params.Action} ${response.status}: ${text.slice(0, 400)}`);
   return text;
 }
 
-/**
- * The key file's JSON as pasted into the dashboard. Forgives what pasting tends to add: surrounding whitespace or
- * quotes, a byte-order mark, the file base64-encoded, or pasted twice. On failure the log shows its shape, never its content.
- */
-function parseServiceAccountKey(raw: string) {
-  let text = raw.replace(/^﻿/, '').trim();
-  if (/^["'][\s\S]*["']$/.test(text)) text = text.slice(1, -1).trim();
-  if (!text.startsWith('{')) {
-    try {
-      text = atob(text.replace(/\s/g, ''));
-    } catch {
-      // Not base64 either; reported below.
-    }
-  }
-  try {
-    const key = JSON.parse(firstJsonObject(text)) as { client_email?: string; private_key?: string };
-    if (key.client_email && key.private_key) return key as { client_email: string; private_key: string };
-    throw new Error('missing client_email or private_key');
-  } catch (error) {
-    throw new Error(
-      `GCP_SA_KEY is not a service account key file (${(error as Error).message}; ${raw.length} characters, ` +
-        `starts ${JSON.stringify(raw.slice(0, 2))}, ends ${JSON.stringify(raw.slice(-2))})`
-    );
-  }
-}
+const tag = (xml: string, name: string) => xml.match(new RegExp(`<${name}>([^<]*)</${name}>`))?.[1] ?? '';
 
-async function accessToken(env: Env) {
-  const now = Math.floor(Date.now() / 1000);
-  if (token && token.expires > now + 60) return token.value;
-  const key = parseServiceAccountKey(env.GCP_SA_KEY!);
-  const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const claims = base64url(
-    JSON.stringify({
-      iss: key.client_email,
-      scope: 'https://www.googleapis.com/auth/compute',
-      aud: 'https://oauth2.googleapis.com/token',
-      iat: now,
-      exp: now + 3600
-    })
-  );
-  const der = Uint8Array.from(atob(key.private_key.replace(/-----[^-]+-----|\s/g, '')), (c) => c.charCodeAt(0));
-  const signingKey = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, [
-    'sign'
-  ]);
-  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', signingKey, new TextEncoder().encode(`${header}.${claims}`));
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: `${header}.${claims}.${base64url(signature)}`
-    })
+async function findInstance(env: Env): Promise<Instance | null> {
+  const xml = await ec2(env, {
+    Action: 'DescribeInstances',
+    'Filter.1.Name': 'tag:Name',
+    'Filter.1.Value.1': env.INSTANCE_NAME,
+    'Filter.2.Name': 'instance-state-name',
+    'Filter.2.Value.1': 'pending',
+    'Filter.2.Value.2': 'running',
+    'Filter.2.Value.3': 'stopping',
+    'Filter.2.Value.4': 'stopped'
   });
-  if (!response.ok) throw new Error(`token ${response.status}: ${await response.text()}`);
-  const result = (await response.json()) as { access_token: string; expires_in: number };
-  token = { value: result.access_token, expires: now + result.expires_in };
-  return token.value;
-}
-
-// ---- Compute Engine ---------------------------------------------------------------------------
-
-const instanceUrl = (env: Env) =>
-  `https://compute.googleapis.com/compute/v1/projects/${env.GCP_PROJECT}/zones/${env.GCP_ZONE}/instances/${env.GCP_INSTANCE}`;
-
-async function compute(env: Env, path: string, method = 'GET') {
-  const response = await fetch(instanceUrl(env) + path, {
-    method,
-    headers: { Authorization: `Bearer ${await accessToken(env)}` }
-  });
-  if (!response.ok) throw new Error(`compute ${method} ${path || '/'} ${response.status}: ${await response.text()}`);
-  return response.json();
+  const item = xml.match(/<instancesSet>\s*<item>([\s\S]*?)<\/instancesSet>/)?.[1];
+  if (!item) return null;
+  const state = item.match(/<instanceState>([\s\S]*?)<\/instanceState>/)?.[1] ?? '';
+  const wake = item.match(/<item>\s*<key>archv3d-wake<\/key>\s*<value>([^<]*)<\/value>/)?.[1] ?? '';
+  return { id: tag(item, 'instanceId'), state: tag(state, 'name'), wake };
 }
 
 // Status is polled by every open page; a few seconds of caching per isolate keeps API calls low.
 let cached: { status: Status; at: number } | null = null;
 
-function toStatus(instance: Instance): Status {
-  if (instance.labels?.['archv3d-wake'] !== 'on') return 'off';
-  switch (instance.status) {
-    case 'RUNNING':
+function toStatus(instance: Instance | null): Status {
+  if (!instance || instance.wake !== 'on') return 'off';
+  switch (instance.state) {
+    case 'running':
       return 'running';
-    case 'PROVISIONING':
-    case 'STAGING':
-    case 'REPAIRING':
+    case 'pending':
       return 'starting';
     default:
-      // TERMINATED, STOPPING, SUSPENDING, SUSPENDED
+      // stopped, stopping
       return 'asleep';
   }
 }
 
-async function readStatus(env: Env, fresh = false): Promise<Status> {
-  if (!fresh && cached && Date.now() - cached.at < 5000) return cached.status;
-  const status = toStatus((await compute(env, '')) as Instance);
+async function readStatus(env: Env, fresh = false) {
+  if (!fresh && cached && Date.now() - cached.at < 5000) return { status: cached.status, instance: null };
+  const instance = await findInstance(env);
+  const status = toStatus(instance);
   cached = { status, at: Date.now() };
-  return status;
+  return { status, instance };
 }
 
 export default {
@@ -187,20 +128,23 @@ export default {
       });
     }
 
-    if (!env.GCP_SA_KEY) return reply({ status: 'off', reason: 'not configured' }, 200, origin);
+    if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
+      return reply({ status: 'off', reason: 'not configured' }, 200, origin);
+    }
 
     try {
       if (pathname === '/status' && request.method === 'GET') {
-        return reply({ status: await readStatus(env) }, 200, origin);
+        return reply({ status: (await readStatus(env)).status }, 200, origin);
       }
       if (pathname === '/wake' && request.method === 'POST') {
         if (!origin) return reply({ error: 'Forbidden' }, 403, null);
-        const status = await readStatus(env, true);
-        if (status !== 'asleep') return reply({ status }, status === 'off' ? 409 : 200, origin);
-        // A VM that is still STOPPING can't start yet; the page retries.
-        await compute(env, '/start', 'POST');
+        const { status, instance } = await readStatus(env, true);
+        if (status !== 'asleep' || !instance) return reply({ status }, status === 'off' ? 409 : 200, origin);
+        // An instance that is still stopping can't start yet; the page retries.
+        if (instance.state !== 'stopped') return reply({ status }, 200, origin);
+        await ec2(env, { Action: 'StartInstances', 'InstanceId.1': instance.id });
         cached = { status: 'starting', at: Date.now() };
-        console.log('woke the VM');
+        console.log(`woke ${instance.id}`);
         return reply({ status: 'starting' }, 202, origin);
       }
       return reply({ error: 'Not found' }, 404, origin);

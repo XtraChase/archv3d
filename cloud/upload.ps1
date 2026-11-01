@@ -44,7 +44,7 @@ GCloud storage cp "$EngineRedist\vc_redist.x64.exe" "$EngineRedist\GameInputRedi
 
 Write-Host 'Scripts...'
 GCloud storage cp "$Web\start_experience.bat" "$Web\stop_experience.bat" "gs://$Bucket/web/"
-GCloud storage cp "$PSScriptRoot\vm-startup.ps1" "$PSScriptRoot\run-stream.ps1" "gs://$Bucket/web/cloud/"
+GCloud storage cp "$PSScriptRoot\vm-startup.ps1" "$PSScriptRoot\run-stream.ps1" "$PSScriptRoot\stream-session.ps1" "$PSScriptRoot\monitor.ps1" "gs://$Bucket/web/cloud/"
 
 if ($Secrets) {
   Write-Host 'Secrets...'
