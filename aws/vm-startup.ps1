@@ -69,6 +69,25 @@ try {
     try { AwsCli s3 cp $prev "s3://$Bucket/logs/boot-$(Get-Date -Format 'yyyyMMdd-HHmmss')/" --recursive } catch { Log "log upload failed: $_" }
   }
 
+  # A 48 GB page file. With a viewer moving the camera the game commits 25+ GB of memory while only ~3-4 GB is
+  # resident (seen on GCP L4 and AWS A10G: commit limit reached, exit 0xC0000409, with 10 GB of RAM still free). The
+  # streaming PC has 128 GB of RAM and never hits the limit; here the page file raises it to ~64 GB without more RAM.
+  $pageFileMB = 49152
+  $computer = Get-CimInstance Win32_ComputerSystem
+  $pageFile = Get-CimInstance Win32_PageFileSetting -ErrorAction SilentlyContinue | Where-Object Name -like 'C:*'
+  if ($computer.AutomaticManagedPagefile -or -not $pageFile -or $pageFile.InitialSize -ne $pageFileMB) {
+    Log "setting a $pageFileMB MB page file"
+    if ($computer.AutomaticManagedPagefile) {
+      Set-CimInstance -InputObject $computer -Property @{ AutomaticManagedPagefile = $false }
+    }
+    $pageFile = Get-CimInstance Win32_PageFileSetting -ErrorAction SilentlyContinue | Where-Object Name -like 'C:*'
+    if (-not $pageFile) {
+      $pageFile = New-CimInstance -ClassName Win32_PageFileSetting -Property @{ Name = 'C:\pagefile.sys' }
+    }
+    Set-CimInstance -InputObject $pageFile -Property @{ InitialSize = [uint32]$pageFileMB; MaximumSize = [uint32]$pageFileMB }
+    $needsReboot = $true
+  }
+
   # Unreal's runtime prerequisites (Visual C++ runtime, GameInput), which Windows Server lacks and the packaged build
   # doesn't install; without them the game exits at launch. Uploaded from the engine's Extras\Redist by upload.ps1.
   if (-not (Test-Path "$Root\redist.installed")) {
