@@ -202,8 +202,17 @@ function runBatch(file) {
   const dir = readConfig().projectDir;
   const script = path.join(dir, file);
   if (!fs.existsSync(script)) return Promise.reject(new Error(`${script} not found (Settings > Project folder).`));
+  // By full path: with NoDefaultCurrentDirectoryInExePath set (some launchers set it), cmd won't run a script from
+  // the current folder by name. The doubled quotes survive cmd /s /c around a path with spaces.
+  const env = { ...process.env };
+  delete env.NoDefaultCurrentDirectoryInExePath;
   return new Promise((resolve, reject) => {
-    const child = spawn('cmd.exe', ['/d', '/c', file], { cwd: dir, windowsHide: true });
+    const child = spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', `""${script}""`], {
+      cwd: dir,
+      env,
+      windowsHide: true,
+      windowsVerbatimArguments: true
+    });
     let output = '';
     child.stdout.on('data', (chunk) => (output += chunk));
     child.stderr.on('data', (chunk) => (output += chunk));
