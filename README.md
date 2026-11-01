@@ -17,17 +17,25 @@ whichever level the current visitor picked.
   home page's Contact dialog to Chase through Cloudflare Email Routing (`send_email` binding, sender
   contact@archv3d.com, Reply-To the visitor). Deployed by Workers Builds from this repo (root directory `contact`);
   needs Email Routing enabled on archv3d.com with the destination address verified. URL in `config.js` `contactUrl`.
-- `control/` – wake/status service for the on-demand AWS instance: a Cloudflare Worker (`archv3d-control`) that tells
-  the site whether the instance is off, asleep, starting or running, and starts it when a visitor asks. Secrets
-  `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`: the IAM user `archv3d-control`, which may only describe instances and
-  start the one tagged `Name=archv3d-stream`. Deployed by Workers Builds (root directory `control`).
+- `control/` – a Cloudflare Worker (`archv3d-control`) with three jobs: wake/status for the on-demand AWS instance (tells
+  the site whether it's off, asleep, starting or running, and starts it when a visitor asks); visit counting (`POST /e`
+  from the site, stored in the D1 database `archv3d-insights`, see Privacy below); and the admin API used by the desktop
+  app (`/admin/*`, Bearer secret `ADMIN_TOKEN`: cloud on/off, insights, contact messages, AWS costs). Secrets
+  `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`: the IAM user `archv3d-control`, whose policy is
+  `aws/control-policy.json` (describe instances; start, stop and tag the one named `archv3d-stream`; read costs). A daily
+  cron deletes visit records older than 13 months. Deployed by Workers Builds (root directory `control`).
+- `desktop/` – **archv3d Control**, the Windows app (Electron + React) that replaced the Start/Stop shortcuts: stream
+  status, cloud machine on/off, the stream on this PC start/stop, AWS costs, visitors (organizations, places, referrers,
+  projects, recent visits) and contact messages, with Windows notifications for new messages and new organization
+  visitors. Closing the window keeps it in the system tray (the icon's color is the stream status; right-click for the
+  actions and Quit). Build the installer with `npm install && npm run dist` (output in `desktop/release/`).
 - `aws/` – the AWS EC2 g5.xlarge (NVIDIA A10G, Cloud Gaming driver, Windows Server 2022, us-west-2) that runs the stream
   instead of this PC: `config.ps1` (names), `create-instance.ps1` (one time: bucket, instance role, security group,
   instance), `userdata.txt` + `vm-startup.ps1` (every boot: installs, driver, page file, logs from before the boot,
   sync from S3), `run-stream.ps1` / `stream-session.ps1` (logon task: starts the stream with
   `start_experience.bat cloud`), `monitor.ps1` (logon task: game memory/GPU/exit codes, uploads logs when the game
-  exits), `upload.ps1` (desktop: pushes build/servers/secrets to S3), `stream-on.ps1` / `stream-off.ps1` (desktop
-  Start/Stop shortcuts: allow waking and start, or disable and stop).
+  exits), `upload.ps1` (desktop: pushes build/servers/secrets to S3), `stream-on.ps1` / `stream-off.ps1` (allow waking
+  and start, or disable and stop; the desktop app does the same through the control Worker).
 - `cloud/` – the earlier Google Cloud L4 version (replaced by `aws/`, kept for reference).
 - `servers/gateway.mjs` – public entry point on port 80: one viewer at a time, a waiting line, session/idle limits,
   TURN credential refresh, and a watchdog that launches and restarts the packaged game.
@@ -49,8 +57,8 @@ whichever level the current visitor picked.
 
 ### On-demand cloud stream
 
-The stream runs on an AWS g5.xlarge instead of this PC (the desktop Start/Stop ArchViz Stream shortcuts run
-`aws\stream-on.ps1` / `stream-off.ps1`; the "(This PC)" shortcuts run it locally). The instance powers itself off after
+The stream runs on an AWS g5.xlarge instead of this PC (turn it on or off in the archv3d Control app, or with
+`aws\stream-on.ps1` / `stream-off.ps1`; the app's "This PC" card runs it locally). The instance powers itself off after
 15 minutes with nobody streaming or waiting (`start_experience.bat cloud` -> gateway `--idle_shutdown_minutes 15`).
 While it's off, the home page shows the experiences as **Asleep**; opening one wakes the instance through the control
 Worker and joins the line automatically once the stream is up (about 4 minutes). `aws\stream-off.ps1` switches waking
@@ -61,6 +69,17 @@ The cloud stream uses **VP8**, not the project's H.264: on NVIDIA's cloud vGPU d
 committed memory (~380 MB/s while a viewer streams) until the game dies. Extra game arguments for experiments go in the
 instance tag `archv3d-game-args` (applied at the next boot). Logs: `s3://archv3d-stream-194184403309/logs/`.
 Updating the cloud build: package the game, then `aws\upload.ps1` and restart the instance.
+
+### Privacy and visitor insights
+
+The site counts visits without cookies and without storing IP addresses, so it needs no cookie banner. Each event
+(page view, project view, experience opened/started, contact form opened/sent) is sent with `navigator.sendBeacon` and
+stored with the visitor's network organization and city as Cloudflare reports them, device/browser/OS, and the
+referring site's host only. A visitor is an anonymous hash of IP + user agent with a salt that changes daily and is
+deleted after the day, so the same person can't be followed across days. Browsers with Global Privacy Control or Do
+Not Track send nothing, and the Privacy page (`#/privacy`) has a per-device opt-out. Records are kept 13 months; contact
+messages until deleted (Messages tab in the app). Organization names come from the network: a company, school or agency
+network is a likely business lead; home and mobile providers are flagged as such.
 
 ## Setup on a fresh clone
 

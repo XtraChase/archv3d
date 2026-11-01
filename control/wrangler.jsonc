@@ -1,7 +1,8 @@
-// Wake/status service for the on-demand cloud stream: tells archv3d.com whether the AWS instance is off, asleep,
-// starting or running, and starts it when a visitor asks. Deployed by Cloudflare Workers Builds from this folder
-// (root directory "control"). Secrets AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY: access key of the IAM user
-// archv3d-control, which may only describe instances and start the one named below.
+// Wake/status service for the on-demand cloud stream (tells archv3d.com whether the AWS instance is off, asleep,
+// starting or running, and starts it when a visitor asks), the site's cookieless visit counter (POST /e) and the admin
+// API of the desktop app (/admin/*). Deployed by Cloudflare Workers Builds from this folder (root directory
+// "control"). Secrets: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, the access key of the IAM user archv3d-control
+// (policy: aws/control-policy.json); ADMIN_TOKEN, shared with the desktop app (Settings > Admin token).
 {
   "name": "archv3d-control",
   "main": "src/index.ts",
@@ -12,5 +13,11 @@
   "vars": {
     "AWS_REGION": "us-west-2",
     "INSTANCE_NAME": "archv3d-stream"
-  }
+  },
+  // Visits, contact messages and a small cache (control/src/insights.ts creates the tables).
+  "d1_databases": [
+    { "binding": "DB", "database_name": "archv3d-insights", "database_id": "d051c863-02a0-461b-941d-5753d45571de" }
+  ],
+  // Daily: delete visit records older than 13 months and old visitor salts.
+  "triggers": { "crons": ["17 9 * * *"] }
 }

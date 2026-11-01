@@ -7,6 +7,7 @@ import {
   queueUrl,
   settings,
   signallingUrl,
+  track,
   urlParams,
   wakeCloud,
   type CloudStatus
@@ -470,6 +471,8 @@ stream.addEventListener('videoInitialized', () => {
   // Unreal opens the visitor's level first if another one is running.
   send({ cmd: 'hello', level: currentLevel.id });
   showHint('Drag to look around · scroll to zoom · press H for controls');
+  // A session that actually streamed (visit insights, #/privacy on the home page).
+  track('experience_session', { path: '/explore', detail: currentLevel.title });
 });
 // The library starts playback after videoInitialized and mutes everything then (StartVideoMuted); apply the
 // visitor's setting right after that.
@@ -520,6 +523,7 @@ $('#start').addEventListener('click', () => {
 
 renderLobby();
 connectQueue();
+track('experience_open', { path: '/explore', detail: currentLevel.title });
 // Opened from the home page's Wake card: wake the VM now and drop the flag so a reload doesn't wake it again.
 if (urlParams.get('wake') === '1') {
   const url = new URL(location.href);

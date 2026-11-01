@@ -491,3 +491,16 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     the relaunch is online in ~30 s. Harmless, only on first boot.
   - Wake service (control/) on EC2 via aws4fetch; IAM user archv3d-control (DescribeInstances, StartInstances on
     Name=archv3d-stream). AWS budget archv3d-stream-monthly $50. GCP project archv3d-stream stopped, not deleted yet.
+  - GCP project deleted.
+- 2026-11-01 – desktop app and visitor insights.
+  - desktop/ "archv3d Control" (Electron 45 + React, NSIS per-user installer) replaced the four Start/Stop desktop
+    shortcuts: status of site/stream/cloud/this PC, cloud on/off and local start/stop, AWS costs, visitors, contact
+    messages. Tray icon colored by status; closing the window hides to the tray. The admin token is kept with
+    Electron safeStorage (DPAPI) and sent as Bearer to control/ /admin/*.
+  - Visitor insights without cookies: frontend/src/site.ts track() -> control POST /e -> D1 archv3d-insights. No IP
+    stored; daily-salted visitor hash; GPC/DNT honored; referrer host only; 13-month retention by cron; Privacy page
+    at #/privacy with an opt-out. "Who visits" = Cloudflare asOrganization of the visitor's network; the app flags
+    ISPs/carriers/clouds (desktop/electron/backend.cjs PROVIDER) so company/school/agency networks stand out.
+  - contact/ also saves each message to D1 (leads) for the Messages tab.
+  - IAM policy for archv3d-control grows to StopInstances, CreateTags (archv3d-wake) and ce:GetCostAndUsage:
+    aws/control-policy.json.

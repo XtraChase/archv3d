@@ -1,7 +1,7 @@
 // Contact form in a dialog. Posts to the contact Worker (contact/ in the repo, URL in config.js contactUrl), which
 // emails it to Chase. If sending fails, the visitor gets the email address instead.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { settings } from '../site';
+import { settings, track } from '../site';
 import { profile } from './profile';
 import { ArrowIcon, CloseIcon } from './icons';
 
@@ -15,6 +15,8 @@ export function ContactDialog({ onClose }: { onClose: () => void }) {
   // When the form was opened; the Worker rejects forms sent faster than a person could fill them in.
   const openedAt = useRef(Date.now());
   const [state, setState] = useState<SendState>({ phase: 'editing' });
+
+  useEffect(() => track('contact_open'), []);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -61,7 +63,10 @@ export function ContactDialog({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ ...data, openedAt: openedAt.current })
       });
       const result = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (response.ok && result.ok) setState({ phase: 'sent', name: data.name.trim().split(/\s+/)[0] });
+      if (response.ok && result.ok) {
+        setState({ phase: 'sent', name: data.name.trim().split(/\s+/)[0] });
+        track('contact_sent', { detail: data.topic });
+      }
       else setState({ phase: 'error', message: result.error ?? 'The message could not be sent right now.' });
     } catch {
       setState({ phase: 'error', message: 'The message could not be sent right now.' });

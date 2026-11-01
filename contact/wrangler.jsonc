@@ -14,5 +14,9 @@
   "vars": {
     // Sender on the Email Routing domain; replies go to the visitor (Reply-To).
     "FROM_ADDRESS": "contact@archv3d.com"
-  }
+  },
+  // Each message is also saved here for the desktop app's Messages tab (same database as the control Worker).
+  "d1_databases": [
+    { "binding": "DB", "database_name": "archv3d-insights", "database_id": "d051c863-02a0-461b-941d-5753d45571de" }
+  ]
 }

@@ -10,3 +10,8 @@ logs/
 frontend/*.zip
 .wrangler/
 .dev.vars
+
+# Desktop app build output; generated Worker types (rebuild with `npx wrangler types`)
+desktop/dist/
+desktop/release/
+*/worker-configuration.d.ts

@@ -435,6 +435,14 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   color: var(--muted);
 }
 .project-facts dd { margin: 6px 0 0; font-size: 15px; }
+/* Privacy page (#/privacy): readable column, headings in the site's serif. */
+.privacy { max-width: 760px; padding-bottom: 72px; }
+.privacy h2 { margin: 40px 0 10px; font-family: var(--serif); font-weight: 400; font-size: 28px; }
+.privacy p, .privacy li { font-size: 16px; line-height: 1.7; }
+.privacy ul { padding-left: 20px; }
+.privacy li { margin-bottom: 6px; }
+.privacy a:not(.button):not(.back-link) { color: var(--accent); text-underline-offset: 3px; }
+
 .project-description { margin-top: 32px; font-size: 18px; line-height: 1.7; }
 .project-description p { margin: 0 0 1em; }
 .project-description a { color: var(--accent); text-underline-offset: 3px; }

@@ -71,6 +71,44 @@ export async function cloudStatus(): Promise<CloudStatus> {
   }
 }
 
+// ---- Visit insights (privacy page: #/privacy) --------------------------------------------------------
+// One small event per page or action to the control Worker (control/src/insights.ts): no cookies, nothing stored in
+// the browser, no IP addresses kept. Nothing is sent when the browser signals an opt-out (Global Privacy Control or
+// Do Not Track), when this device opted out on the privacy page, or off the public site (e.g. the local copy).
+
+export type TrackedEvent = 'pageview' | 'project' | 'experience_open' | 'experience_session' | 'contact_open' | 'contact_sent';
+
+/** localStorage key set by "Don't count my visits" on the privacy page (the visitor's own choice, honored locally). */
+export const OPT_OUT_KEY = 'archv3d-no-insights';
+
+export function trackingAllowed() {
+  const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
+  if (nav.globalPrivacyControl || nav.doNotTrack === '1') return false;
+  if (!/(^|\.)archv3d\.(com|pages\.dev)$/.test(location.hostname)) return false;
+  try {
+    if (localStorage.getItem(OPT_OUT_KEY) === '1') return false;
+  } catch {
+    // Storage blocked: nothing stored, so no opt-out either.
+  }
+  return true;
+}
+
+let referrerSent = false;
+
+export function track(type: TrackedEvent, { path, detail }: { path?: string; detail?: string } = {}) {
+  if (!controlUrl || !trackingAllowed()) return;
+  // Where the visitor came from, once per page load (the Worker keeps only the referring site's name).
+  const ref = referrerSent ? undefined : document.referrer || undefined;
+  referrerSent = true;
+  const body = JSON.stringify({ type, path, detail, ref });
+  try {
+    // text/plain: a beacon without a CORS preflight; the Worker reads the JSON regardless.
+    navigator.sendBeacon(new URL('e', controlUrl).href, new Blob([body], { type: 'text/plain' }));
+  } catch {
+    // Never let insights break the page.
+  }
+}
+
 /** Asks the wake service to start the cloud VM; it only acts when the VM is asleep. */
 export async function wakeCloud(): Promise<CloudStatus> {
   if (!controlUrl) return 'off';

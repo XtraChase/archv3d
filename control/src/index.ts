@@ -1,97 +1,28 @@
-// Wake/status service for the on-demand AWS instance (aws/ in the repo).
-// GET  /status  {status: 'off' | 'asleep' | 'starting' | 'running'}
-//   off       waking disabled (instance tag archv3d-wake != on, set by the desktop Stop shortcut) or not configured
-//   asleep    allowed, instance stopped; POST /wake starts it
-//   starting  instance booting (the stream comes up a few minutes later on stream.archv3d.com)
-//   running   instance up; the page then talks to the gateway itself
-// POST /wake    starts the instance when it is asleep. It powers itself off when idle (gateway --idle_shutdown_minutes).
-import { AwsClient } from 'aws4fetch';
-
-interface Env {
-  AWS_REGION: string;
-  /** Name tag of the instance (its id changes if it is recreated). */
-  INSTANCE_NAME: string;
-  /** Access key of an IAM user that may only describe instances and start this one (Worker secrets). */
-  AWS_ACCESS_KEY_ID?: string;
-  AWS_SECRET_ACCESS_KEY?: string;
-}
+// Control service for archv3d.com: wakes the on-demand AWS instance, records cookieless visitor events, and serves the
+// desktop app (archv3d Control).
+//
+// Public, from the site:
+//   GET  /status   {status: 'off' | 'asleep' | 'starting' | 'running'}
+//     off       waking disabled (instance tag archv3d-wake != on) or not configured
+//     asleep    allowed, instance stopped; POST /wake starts it
+//     starting  instance booting (the stream comes up a few minutes later on stream.archv3d.com)
+//     running   instance up; the page then talks to the gateway itself
+//   POST /wake     starts the instance when it is asleep. It powers itself off when idle.
+//   POST /e        one visitor event (see insights.ts); always 204
+// Desktop app (Authorization: Bearer ADMIN_TOKEN):
+//   GET  /admin/cloud                    instance id, state, wake tag, type, launch time
+//   POST /admin/cloud {action: on|off}   on: allow waking and start; off: disallow waking and stop
+//   GET  /admin/insights?days=30         visitors, pages, places, organizations, leads
+//   POST /admin/leads/delete {id}        removes a contact lead
+//   GET  /admin/costs[?fresh=1]          AWS month-to-date cost by service (cached 6 h)
+import { findInstance, hasAwsKey, monthToDateCosts, setWake, startInstance, stopInstance, type Instance } from './aws';
+import { allowedOrigin, isAdmin, preflight, reply, type Env } from './http';
+import { cached, cleanup, deleteLead, ingest, summary } from './insights';
 
 type Status = 'off' | 'asleep' | 'starting' | 'running';
 
-interface Instance {
-  id: string;
-  state: string;
-  wake: string;
-}
-
-function allowedOrigin(origin: string | null) {
-  if (!origin) return null;
-  try {
-    const { protocol, hostname } = new URL(origin);
-    const ok =
-      hostname === 'archv3d.com' ||
-      hostname.endsWith('.archv3d.com') ||
-      hostname === 'archv3d.pages.dev' ||
-      hostname.endsWith('.archv3d.pages.dev') ||
-      (protocol === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(hostname));
-    return ok ? origin : null;
-  } catch {
-    return null;
-  }
-}
-
-function reply(body: object, status: number, origin: string | null) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
-  if (origin) {
-    headers['Access-Control-Allow-Origin'] = origin;
-    headers['Vary'] = 'Origin';
-  }
-  return new Response(JSON.stringify(body), { status, headers });
-}
-
-// ---- EC2 (query API, signed with SigV4) ------------------------------------------------------------
-
-// The configured region, or us-west-2 when it's missing or not a region name (a dashboard secret named AWS_REGION
-// once replaced it, and deleting that secret removed the setting until the next deploy from the repo).
-const region = (env: Env) => (/^[a-z]{2}(-[a-z]+)+-\d$/.test(env.AWS_REGION ?? '') ? env.AWS_REGION : 'us-west-2');
-
-async function ec2(env: Env, params: Record<string, string>) {
-  const client = new AwsClient({
-    accessKeyId: env.AWS_ACCESS_KEY_ID!.trim(),
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY!.trim(),
-    service: 'ec2',
-    region: region(env)
-  });
-  const url = new URL(`https://ec2.${region(env)}.amazonaws.com/`);
-  url.search = new URLSearchParams({ Version: '2016-11-15', ...params }).toString();
-  const response = await client.fetch(url.href);
-  const text = await response.text();
-  if (!response.ok) throw new Error(`EC2 ${params.Action} ${response.status}: ${text.slice(0, 400)}`);
-  return text;
-}
-
-const tag = (xml: string, name: string) => xml.match(new RegExp(`<${name}>([^<]*)</${name}>`))?.[1] ?? '';
-
-async function findInstance(env: Env): Promise<Instance | null> {
-  const xml = await ec2(env, {
-    Action: 'DescribeInstances',
-    'Filter.1.Name': 'tag:Name',
-    'Filter.1.Value.1': env.INSTANCE_NAME,
-    'Filter.2.Name': 'instance-state-name',
-    'Filter.2.Value.1': 'pending',
-    'Filter.2.Value.2': 'running',
-    'Filter.2.Value.3': 'stopping',
-    'Filter.2.Value.4': 'stopped'
-  });
-  const item = xml.match(/<instancesSet>\s*<item>([\s\S]*?)<\/instancesSet>/)?.[1];
-  if (!item) return null;
-  const state = item.match(/<instanceState>([\s\S]*?)<\/instanceState>/)?.[1] ?? '';
-  const wake = item.match(/<item>\s*<key>archv3d-wake<\/key>\s*<value>([^<]*)<\/value>/)?.[1] ?? '';
-  return { id: tag(item, 'instanceId'), state: tag(state, 'name'), wake };
-}
-
-// Status is polled by every open page; a few seconds of caching per isolate keeps API calls low.
-let cached: { status: Status; at: number } | null = null;
+// Status is polled by every open page; a few seconds of caching per isolate keeps AWS calls low.
+let cachedStatus: { status: Status; at: number } | null = null;
 
 function toStatus(instance: Instance | null): Status {
   if (!instance || instance.wake !== 'on') return 'off';
@@ -107,47 +38,89 @@ function toStatus(instance: Instance | null): Status {
 }
 
 async function readStatus(env: Env, fresh = false) {
-  if (!fresh && cached && Date.now() - cached.at < 5000) return { status: cached.status, instance: null };
+  if (!fresh && cachedStatus && Date.now() - cachedStatus.at < 5000) return { status: cachedStatus.status, instance: null };
   const instance = await findInstance(env);
   const status = toStatus(instance);
-  cached = { status, at: Date.now() };
+  cachedStatus = { status, at: Date.now() };
   return { status, instance };
 }
 
+async function admin(request: Request, env: Env, pathname: string, url: URL) {
+  if (!env.ADMIN_TOKEN) return reply({ error: 'admin not configured (Worker secret ADMIN_TOKEN)' }, 503);
+  if (!(await isAdmin(request, env))) return reply({ error: 'unauthorized' }, 401);
+
+  if (pathname === '/admin/cloud') {
+    if (!hasAwsKey(env)) return reply({ error: 'AWS key not configured' }, 503);
+    if (request.method === 'GET') {
+      const instance = await findInstance(env);
+      return reply({ instance, status: toStatus(instance) }, 200);
+    }
+    const { action } = (await request.json().catch(() => ({}))) as { action?: string };
+    const instance = await findInstance(env);
+    if (!instance) return reply({ error: `no instance named ${env.INSTANCE_NAME}` }, 404);
+    if (action === 'on') {
+      await setWake(env, instance.id, true);
+      if (instance.state === 'stopped') await startInstance(env, instance.id);
+    } else if (action === 'off') {
+      await setWake(env, instance.id, false);
+      if (instance.state === 'running' || instance.state === 'pending') await stopInstance(env, instance.id);
+    } else {
+      return reply({ error: 'action must be on or off' }, 400);
+    }
+    cachedStatus = null;
+    console.log(`admin cloud ${action} (${instance.id}, was ${instance.state})`);
+    return reply({ ok: true }, 200);
+  }
+
+  if (!env.DB) return reply({ error: 'database not configured (D1 binding DB)' }, 503);
+  if (pathname === '/admin/insights' && request.method === 'GET') {
+    const days = Math.min(400, Math.max(1, Number(url.searchParams.get('days')) || 30));
+    return reply(await summary(env, days), 200);
+  }
+  if (pathname === '/admin/leads/delete' && request.method === 'POST') {
+    const { id } = (await request.json().catch(() => ({}))) as { id?: number };
+    if (!Number.isInteger(id)) return reply({ error: 'id required' }, 400);
+    await deleteLead(env, id!);
+    return reply({ ok: true }, 200);
+  }
+  if (pathname === '/admin/costs' && request.method === 'GET') {
+    if (!hasAwsKey(env)) return reply({ error: 'AWS key not configured' }, 503);
+    const fresh = url.searchParams.get('fresh') === '1';
+    return reply(await cached(env, 'aws-costs', 6 * 3600000, () => monthToDateCosts(env), fresh), 200);
+  }
+  return reply({ error: 'Not found' }, 404);
+}
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const origin = allowedOrigin(request.headers.get('Origin'));
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
+    const { pathname } = url;
 
-    if (request.method === 'OPTIONS') {
-      if (!origin) return new Response(null, { status: 403 });
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': origin,
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Max-Age': '86400',
-          Vary: 'Origin'
-        }
-      });
-    }
-
-    if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
-      return reply({ status: 'off', reason: 'not configured' }, 200, origin);
-    }
+    if (request.method === 'OPTIONS') return preflight(origin);
 
     try {
+      if (pathname.startsWith('/admin/')) return await admin(request, env, pathname, url);
+
+      if (pathname === '/e' && request.method === 'POST') {
+        // Only from the site; recorded after the reply so the page never waits on the database.
+        if (origin) ctx.waitUntil(ingest(request, env).catch((error) => console.error(`/e failed: ${error.message}`)));
+        return new Response(null, { status: 204, headers: origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {} });
+      }
+
+      if (!hasAwsKey(env)) return reply({ status: 'off', reason: 'not configured' }, 200, origin);
+
       if (pathname === '/status' && request.method === 'GET') {
         return reply({ status: (await readStatus(env)).status }, 200, origin);
       }
       if (pathname === '/wake' && request.method === 'POST') {
-        if (!origin) return reply({ error: 'Forbidden' }, 403, null);
+        if (!origin) return reply({ error: 'Forbidden' }, 403);
         const { status, instance } = await readStatus(env, true);
         if (status !== 'asleep' || !instance) return reply({ status }, status === 'off' ? 409 : 200, origin);
         // An instance that is still stopping can't start yet; the page retries.
         if (instance.state !== 'stopped') return reply({ status }, 200, origin);
-        await ec2(env, { Action: 'StartInstances', 'InstanceId.1': instance.id });
-        cached = { status: 'starting', at: Date.now() };
+        await startInstance(env, instance.id);
+        cachedStatus = { status: 'starting', at: Date.now() };
         console.log(`woke ${instance.id}`);
         return reply({ status: 'starting' }, 202, origin);
       }
@@ -157,5 +130,9 @@ export default {
       console.error(`${pathname} failed: ${(error as Error).message}`);
       return reply({ status: 'error', error: 'Could not reach the cloud machine.' }, 502, origin);
     }
+  },
+
+  async scheduled(_event: ScheduledController, env: Env) {
+    await cleanup(env);
   }
 };

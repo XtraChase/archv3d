@@ -3,17 +3,19 @@
 //   #/                 home
 //   #/experiences, #/work, #/about   home, scrolled to that section
 //   #/work/<slug>      a portfolio project
+//   #/privacy          what the site records about visits
 import { useEffect, useMemo, useState } from 'react';
 
 export type Section = 'experiences' | 'work' | 'about';
 
-export type Route = { page: 'home'; section?: Section } | { page: 'project'; slug: string };
+export type Route = { page: 'home'; section?: Section } | { page: 'project'; slug: string } | { page: 'privacy' };
 
 const sections: Section[] = ['experiences', 'work', 'about'];
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts[0] === 'work' && parts[1]) return { page: 'project', slug: decodeURIComponent(parts[1]) };
+  if (parts[0] === 'privacy') return { page: 'privacy' };
   const section = sections.find((name) => name === parts[0]);
   return { page: 'home', section };
 }
@@ -21,7 +23,8 @@ export function parseRoute(hash: string): Route {
 export const href = {
   home: '#/',
   section: (section: Section) => `#/${section}`,
-  project: (slug: string) => `#/work/${encodeURIComponent(slug)}`
+  project: (slug: string) => `#/work/${encodeURIComponent(slug)}`,
+  privacy: '#/privacy'
 };
 
 export function useRoute() {

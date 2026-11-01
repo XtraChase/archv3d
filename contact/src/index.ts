@@ -6,6 +6,29 @@ import { EmailMessage } from 'cloudflare:email';
 interface Env {
   CONTACT_EMAIL: { send(message: EmailMessage): Promise<void> };
   FROM_ADDRESS: string;
+  /** The insights database shared with the control Worker: each message is also kept as a lead for the desktop app. */
+  DB?: D1Database;
+}
+
+/** Keeps the message as a lead (the visitor sent it to be contacted; the privacy page says so). Never blocks sending. */
+async function saveLead(env: Env, request: Request, fields: { name: string; email: string; topic: string; message: string }) {
+  if (!env.DB) return;
+  const cf = (request.cf ?? {}) as { country?: string; region?: string; city?: string; asOrganization?: string };
+  try {
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS leads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, name TEXT, email TEXT, topic TEXT, message TEXT,
+        org TEXT, city TEXT, region TEXT, country TEXT)`
+    ).run();
+    await env.DB.prepare(
+      'INSERT INTO leads (ts, name, email, topic, message, org, city, region, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+      .bind(Date.now(), fields.name, fields.email, fields.topic, fields.message,
+        cf.asOrganization ?? null, cf.city ?? null, cf.region ?? null, cf.country ?? null)
+      .run();
+  } catch (error) {
+    console.error(`saving the lead failed: ${(error as Error).message}`);
+  }
 }
 
 const TOPICS = ['Project inquiry', 'Architectural visualization', 'Live experience feedback', 'Other'];
@@ -125,8 +148,10 @@ export default {
       await env.CONTACT_EMAIL.send(new EmailMessage(env.FROM_ADDRESS, to, buildMessage(env, to, { name, email, topic, message })));
     } catch (error) {
       console.error('send failed', error);
+      await saveLead(env, request, { name, email, topic, message });
       return reply({ error: 'The message could not be sent right now.' }, 502, origin);
     }
+    await saveLead(env, request, { name, email, topic, message });
     return reply({ ok: true }, 200, origin);
   }
 };

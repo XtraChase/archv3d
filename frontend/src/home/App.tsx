@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { settings } from '../site';
+import { settings, track } from '../site';
 import { useAvailability } from './availability';
 import { ContactDialog } from './ContactDialog';
 import { HomePage } from './HomePage';
+import { PrivacyPage } from './PrivacyPage';
 import { ProjectPage } from './ProjectPage';
 import { findProject } from './projects';
 import { href, useRoute, type Route } from './routing';
@@ -24,7 +25,7 @@ function summarize(text: string) {
 }
 
 function routeKey(route: Route) {
-  return route.page === 'project' ? `work/${route.slug}` : 'home';
+  return route.page === 'project' ? `work/${route.slug}` : route.page;
 }
 
 export function App() {
@@ -67,6 +68,16 @@ export function App() {
     setMeta('meta[property="og:description"]', description);
   }, [route]);
 
+  // One page view per page (not per section scroll), plus which project, for the visit insights (#/privacy).
+  useEffect(() => {
+    if (route.page === 'project') {
+      track('pageview', { path: `/work/${route.slug}` });
+      track('project', { detail: findProject(route.slug)?.title ?? route.slug });
+    } else {
+      track('pageview', { path: route.page === 'privacy' ? '/privacy' : '/' });
+    }
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [contactOpen, setContactOpen] = useState(false);
   const openContact = useCallback(() => setContactOpen(true), []);
   const closeContact = useCallback(() => setContactOpen(false), []);
@@ -78,6 +89,8 @@ export function App() {
         {route.page === 'project' ? (
           // Keyed by slug: each project starts fresh (players muted, lightbox closed) instead of reusing the last one.
           <ProjectPage key={route.slug} slug={route.slug} />
+        ) : route.page === 'privacy' ? (
+          <PrivacyPage />
         ) : (
           <HomePage availability={availability} onContact={openContact} />
         )}
@@ -131,6 +144,7 @@ function Footer() {
           © {new Date().getFullYear()} {profile.name}
         </span>
         <span className="muted">Interactive spaces streamed live from Unreal Engine</span>
+        <a href={href.privacy}>Privacy</a>
         <a href={`mailto:${profile.email}`}>{profile.email}</a>
       </div>
     </footer>

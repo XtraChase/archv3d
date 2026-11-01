@@ -1,0 +1,14 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Sid": "FindInstance", "Effect": "Allow", "Action": "ec2:DescribeInstances", "Resource": "*" },
+    {
+      "Sid": "ControlStreamInstance",
+      "Effect": "Allow",
+      "Action": ["ec2:StartInstances", "ec2:StopInstances", "ec2:CreateTags"],
+      "Resource": "arn:aws:ec2:us-west-2:194184403309:instance/*",
+      "Condition": { "StringEquals": { "aws:ResourceTag/Name": "archv3d-stream" } }
+    },
+    { "Sid": "ReadCosts", "Effect": "Allow", "Action": "ce:GetCostAndUsage", "Resource": "*" }
+  ]
+}
