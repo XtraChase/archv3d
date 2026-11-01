@@ -478,3 +478,16 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   - Tested with `wrangler pages dev` on the old and new builds: Lighthouse mobile performance 80-81 -> 96-98, SEO 92 ->
     100, FCP ~2.7 s -> ~1.7 s, page weight 771 -> 669 KiB; a Playwright check of the build served as archv3d.com
     passed 37/37 with no CSP violations; screenshots identical.
+- 2026-10-31 CLOUD STREAM MOVED TO AWS; CRASH FOUND AND FIXED:
+  - GCP L4 game died ~25-60 s into every session. Moved to AWS g5.xlarge (A10G, NVIDIA Cloud Gaming driver 616.92,
+    Windows Server 2022, us-west-2), aws/ scripts; same freeze there. aws/monitor.ps1 showed the cause: the game's
+    committed (private) memory grows ~380 MB/s while a viewer streams, working set flat ~3 GB, until the commit limit
+    is hit (exit 0xC0000409). Not it: UseMediaCapture=False, DecoupleFramerate=False, 48 GB page file (only delayed it).
+    Codec=VP8 (software encoder, no NVENC): memory flat at ~6.7 GB over 5+ min, 25-29 fps, 5 Mbps. So the NVENC H.264
+    path leaks on NVIDIA cloud vGPU drivers (vWS and Cloud Gaming alike); the desktop (GeForce driver, 128 GB RAM) is
+    unaffected or hides it. aws/stream-session.ps1 launches the cloud game with
+    -ini:Game:[/Script/PixelStreaming2Settings.PixelStreaming2PluginSettings]:Codec=VP8.
+  - First launch after a fresh install compiles shaders for >180 s and gets killed once by the gateway hang watchdog;
+    the relaunch is online in ~30 s. Harmless, only on first boot.
+  - Wake service (control/) on EC2 via aws4fetch; IAM user archv3d-control (DescribeInstances, StartInstances on
+    Name=archv3d-stream). AWS budget archv3d-stream-monthly $50. GCP project archv3d-stream stopped, not deleted yet.
