@@ -28,10 +28,13 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
     }
   }
 
+  // A generated token is saved here at once; it only has to be copied into Cloudflare.
   async function generate() {
-    setToken(await api.generateToken());
+    const fresh = await api.generateToken();
+    setToken(fresh);
     setGenerated(true);
     setCopied(false);
+    await save({ adminToken: fresh }, 'New token saved on this PC. Copy it into Cloudflare as ADMIN_TOKEN.');
   }
 
   async function copy() {
@@ -58,14 +61,12 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
             <button className="button" onClick={generate}>
               Generate a new token
             </button>{' '}
-            or paste the one you already added to Cloudflare.
+            (saved here right away) and copy it, or paste the one already in Cloudflare and save it.
           </li>
           <li>
-            In the Cloudflare dashboard open <strong>Workers &amp; Pages › archv3d-control › Settings › Variables and Secrets</strong>, choose{' '}
-            <strong>Add</strong>, type <strong>Secret</strong>, name <code>ADMIN_TOKEN</code>, paste the token as the value and{' '}
-            <strong>Deploy</strong>.
+            In the Cloudflare dashboard open <strong>Workers &amp; Pages › archv3d-control › Settings › Variables and Secrets</strong>. Add
+            (or edit) the secret <code>ADMIN_TOKEN</code>, paste the token as the value and <strong>Deploy</strong>.
           </li>
-          <li>Save it here.</li>
         </ol>
         <div className="field-row">
           <input
@@ -87,6 +88,7 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
           )}
           <button
             className="button button-primary"
+            hidden={generated}
             disabled={!token.trim()}
             onClick={async () => {
               await save({ adminToken: token }, 'Admin token saved.');

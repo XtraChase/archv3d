@@ -93,6 +93,8 @@ async function controlFetch(route, { method = 'GET', body, admin = true } = {}) 
     signal: AbortSignal.timeout(20000)
   });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401) throw new Error("The admin token on this PC doesn't match ADMIN_TOKEN in Cloudflare (Settings).");
+  if (response.status === 503 && admin) throw new Error('ADMIN_TOKEN isn\'t set on the control Worker in Cloudflare yet (Settings).');
   if (!response.ok) throw new Error(data.error || `${route}: HTTP ${response.status}`);
   return data;
 }

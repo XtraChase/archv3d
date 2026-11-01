@@ -86,13 +86,14 @@ function refHost(value: unknown) {
   }
 }
 
-/** POST /e from the site: one event. Always answers 204 so the page never waits or learns anything. */
-export async function ingest(request: Request, env: Env) {
+/** POST /e from the site: one event. `text` is the body, read before the 204 reply (a Worker can't read the request
+ * body once it has responded). */
+export async function ingest(request: Request, env: Env, text: string) {
   const ua = request.headers.get('User-Agent') ?? '';
   if (!env.DB || !ua || BOT.test(ua) || request.headers.get('Sec-GPC') === '1' || request.headers.get('DNT') === '1') return;
   let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
     return;
   }

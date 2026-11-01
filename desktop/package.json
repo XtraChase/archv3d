@@ -4,7 +4,7 @@
   "description": "Start and stop the archv3d.com stream, watch the site and see who visits.",
   "author": "Chase Richards",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite build && electron .",

@@ -104,7 +104,10 @@ export default {
 
       if (pathname === '/e' && request.method === 'POST') {
         // Only from the site; recorded after the reply so the page never waits on the database.
-        if (origin) ctx.waitUntil(ingest(request, env).catch((error) => console.error(`/e failed: ${error.message}`)));
+        if (origin) {
+          const text = await request.text();
+          ctx.waitUntil(ingest(request, env, text).catch((error) => console.error(`/e failed: ${error.message}`)));
+        }
         return new Response(null, { status: 204, headers: origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {} });
       }
 
