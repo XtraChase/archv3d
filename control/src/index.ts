@@ -51,14 +51,18 @@ function reply(body: object, status: number, origin: string | null) {
 
 // ---- EC2 (query API, signed with SigV4) ------------------------------------------------------------
 
+// The configured region, or us-west-2 when it's missing or not a region name (a dashboard secret named AWS_REGION
+// once replaced it, and deleting that secret removed the setting until the next deploy from the repo).
+const region = (env: Env) => (/^[a-z]{2}(-[a-z]+)+-\d$/.test(env.AWS_REGION ?? '') ? env.AWS_REGION : 'us-west-2');
+
 async function ec2(env: Env, params: Record<string, string>) {
   const client = new AwsClient({
     accessKeyId: env.AWS_ACCESS_KEY_ID!.trim(),
     secretAccessKey: env.AWS_SECRET_ACCESS_KEY!.trim(),
     service: 'ec2',
-    region: env.AWS_REGION
+    region: region(env)
   });
-  const url = new URL(`https://ec2.${env.AWS_REGION}.amazonaws.com/`);
+  const url = new URL(`https://ec2.${region(env)}.amazonaws.com/`);
   url.search = new URLSearchParams({ Version: '2016-11-15', ...params }).toString();
   const response = await client.fetch(url.href);
   const text = await response.text();
