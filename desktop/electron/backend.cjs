@@ -229,7 +229,7 @@ const PROVIDER = new RegExp(
   [
     'comcast', 'charter', 'spectrum', 'verizon', 'at&t', '\\batt\\b', 't-mobile', 'tmobile', 'sprint', 'cox ', 'centurylink',
     'lumen', 'frontier', 'windstream', 'mediacom', 'altice', 'optimum', 'suddenlink', 'cable one', 'sparklight', 'wow!',
-    'starlink', 'space exploration', 'viasat', 'hughes', 'google', 'amazon', 'microsoft', 'cloudflare', 'digitalocean',
+    'starlink', 'spacex', 'space exploration', 'viasat', 'hughes', 'google', 'amazon', 'microsoft', 'cloudflare', 'digitalocean',
     'linode', 'akamai', 'ovh', 'hetzner', 'oracle', 'apple', 'facebook', 'meta platforms', 'vodafone', 'british tele',
     'deutsche telekom', 'orange', 'telefonica', 'bell canada', 'rogers', 'shaw', 'telus', 'videotron', 'ziply',
     'consolidated', 'brightspeed', 'astound', 'metronet', 'cricket', 'us cellular', 'dish', 'blackfoot', 'vision net',
