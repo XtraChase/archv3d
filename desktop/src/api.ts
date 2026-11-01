@@ -126,6 +126,7 @@ export interface Api {
   getSettings(): Promise<Settings>;
   saveSettings(changes: Partial<Settings> & { adminToken?: string }): Promise<Settings>;
   generateToken(): Promise<string>;
+  testToken(): Promise<{ ok: boolean; error?: string }>;
   openExternal(url: string): Promise<void>;
   onStatus(callback: (status: Status) => void): () => void;
   onAction(callback: (event: ActionEvent) => void): () => void;

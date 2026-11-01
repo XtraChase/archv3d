@@ -188,6 +188,7 @@ ipcMain.handle('settings:save', async (_event, changes) => {
   return settings;
 });
 ipcMain.handle('settings:generateToken', () => backend.generateToken());
+ipcMain.handle('settings:testToken', () => backend.testToken());
 ipcMain.handle('open:external', (_event, url) => {
   if (/^(https?:|mailto:)/.test(url)) shell.openExternal(url);
 });

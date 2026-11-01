@@ -300,3 +300,5 @@ button { font: inherit; color: inherit; }
 .input:focus { outline: none; border-color: var(--accent); }
 details { margin-top: 14px; }
 summary { cursor: pointer; color: var(--muted); }
+.token-facts { max-width: 520px; margin-bottom: 4px; }
+.token-facts dd { text-align: left; }

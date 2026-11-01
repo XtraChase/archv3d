@@ -65,6 +65,16 @@ function saveSettings(changes) {
   return publicSettings();
 }
 
+/** Whether the control Worker accepts the saved token (Settings shows it). */
+async function testToken() {
+  try {
+    await controlFetch('admin/cloud');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 function generateToken() {
   return require('node:crypto').randomBytes(32).toString('hex');
 }
@@ -255,6 +265,7 @@ module.exports = {
   publicSettings,
   saveSettings,
   generateToken,
+  testToken,
   rememberSeen,
   getStatus,
   getInsights,
