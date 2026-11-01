@@ -2,7 +2,7 @@
 
 Web front end and streaming servers for the interactive archviz experience at https://archv3d.com,
 streamed from the Unreal Engine 5.8 project `Movie_Studio` with Pixel Streaming 2. Levels: Movie Studio (`/Game/Main`)
-and As-Built Residence (`/Game/Levels/AsBuilt_WP`), served by one game process and one waiting line; the game opens
+and Single Family Residence (`/Game/Levels/AsBuilt_WP`), served by one game process and one waiting line; the game opens
 whichever level the current visitor picked.
 
 - `frontend/` – the browser UI (Vite + React + TypeScript + `@epicgames-ps/lib-pixelstreamingfrontend-ue5.8`):
