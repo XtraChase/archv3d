@@ -336,3 +336,7 @@ summary { cursor: pointer; color: var(--muted); }
 .app-phone .panel { padding: 16px; }
 .app-phone .card h3 { font-size: 26px; }
 .app-phone .settings { max-width: none !important; }
+
+.unit-row { display: flex; align-items: center; gap: 8px; }
+.num-input { width: 96px; }
+.field .footnote { margin-top: 0; }

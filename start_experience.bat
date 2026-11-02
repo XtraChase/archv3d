@@ -16,7 +16,7 @@ set WINDOWED=
 set CLOUD=
 for %%a in (%*) do (
   if /i "%%~a"=="windowed" set WINDOWED=--windowed
-  if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15 --log_file "%ROOT%servers\gateway.log"
+  if /i "%%~a"=="cloud" set CLOUD=--idle_shutdown_minutes 15 --imds_settings --log_file "%ROOT%servers\gateway.log"
 )
 rem Extra game arguments for experiments on the cloud VM (cloud\stream-session.ps1 sets it from instance metadata).
 set GAME_ARGS=

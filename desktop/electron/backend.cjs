@@ -281,6 +281,8 @@ module.exports = {
   rememberSeen,
   getStatus,
   getInsights,
+  getCloudSettings: async () => (await controlFetch('admin/cloud')).settings,
+  saveCloudSettings: async (settings) => (await controlFetch('admin/cloud/settings', { method: 'POST', body: settings })).settings,
   getCosts: (fresh) => controlFetch(`admin/costs${fresh ? '?fresh=1' : ''}`),
   deleteLead: (id) => controlFetch('admin/leads/delete', { method: 'POST', body: { id } }),
   cloudOn,

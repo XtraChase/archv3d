@@ -214,6 +214,8 @@ export function createWebApi(): Api {
     runAction,
     getInsights,
     getCosts: (fresh) => controlFetch(`admin/costs${fresh ? '?fresh=1' : ''}`) as Promise<Costs>,
+    getCloudSettings: async () => (await controlFetch('admin/cloud')).settings,
+    saveCloudSettings: async (settings) => (await controlFetch('admin/cloud/settings', { method: 'POST', body: settings })).settings,
     deleteLead: async (id) => {
       await controlFetch('admin/leads/delete', { method: 'POST', body: { id } });
     },

@@ -2,6 +2,7 @@
 // On the phone only the token and the addresses apply; the desktop app also shows the QR code that sets up the phone.
 import { useEffect, useState } from 'react';
 import { api, errorText, isPhone, type Settings } from './api';
+import { CloudSettingsPanel } from './CloudSettings';
 import { QrCode } from './QrCode';
 
 type Check = { state: 'checking' } | { state: 'ok' } | { state: 'error'; text: string };
@@ -261,6 +262,8 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
           </>
         )}
       </section>
+
+      {settings.hasAdminToken && !editing && <CloudSettingsPanel />}
 
       {!isPhone && settings.hasAdminToken && !editing && <PhoneSetup address={settings.controlUrl} />}
 

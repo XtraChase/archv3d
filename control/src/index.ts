@@ -10,12 +10,13 @@
 //   POST /wake     starts the instance when it is asleep. It powers itself off when idle.
 //   POST /e        one visitor event (see insights.ts); always 204
 // Desktop app (Authorization: Bearer ADMIN_TOKEN):
-//   GET  /admin/cloud                    instance id, state, wake tag, type, launch time
+//   GET  /admin/cloud                    instance id, state, wake tag, type, launch time, and the cloud settings
+//   POST /admin/cloud/settings {...}     idle power-off, session length and idle disconnect minutes (instance tags)
 //   POST /admin/cloud {action: on|off}   on: allow waking and start; off: disallow waking and stop
 //   GET  /admin/insights?days=30         visitors, pages, places, organizations, leads
 //   POST /admin/leads/delete {id}        removes a contact lead
 //   GET  /admin/costs[?fresh=1]          AWS month-to-date cost by service (cached 6 h)
-import { findInstance, hasAwsKey, monthToDateCosts, setWake, startInstance, stopInstance, type Instance } from './aws';
+import { findInstance, hasAwsKey, monthToDateCosts, readSettings, SETTING_FIELDS, setTags, setWake, startInstance, stopInstance, type CloudSettings, type Instance } from './aws';
 import { allowedOrigin, isAdmin, preflight, reply, type Env } from './http';
 import { cached, cleanup, deleteLead, ingest, summary } from './insights';
 
@@ -49,11 +50,31 @@ async function admin(request: Request, env: Env, pathname: string, url: URL) {
   if (!env.ADMIN_TOKEN) return reply({ error: 'admin not configured (Worker secret ADMIN_TOKEN)' }, 503);
   if (!(await isAdmin(request, env))) return reply({ error: 'unauthorized' }, 401);
 
+  if (pathname === '/admin/cloud/settings' && request.method === 'POST') {
+    if (!hasAwsKey(env)) return reply({ error: 'AWS key not configured' }, 503);
+    const body = (await request.json().catch(() => ({}))) as Partial<Record<keyof CloudSettings, unknown>>;
+    const tags: Record<string, string> = {};
+    for (const [key, field] of Object.entries(SETTING_FIELDS)) {
+      const value = body[key as keyof CloudSettings];
+      if (value === undefined) continue;
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < field.min || value > field.max) {
+        return reply({ error: `${key} must be a whole number from ${field.min} to ${field.max}` }, 400);
+      }
+      tags[field.tag] = String(value);
+    }
+    if (Object.keys(tags).length === 0) return reply({ error: 'no settings given' }, 400);
+    const instance = await findInstance(env);
+    if (!instance) return reply({ error: `no instance named ${env.INSTANCE_NAME}` }, 404);
+    await setTags(env, instance.id, tags);
+    console.log(`admin cloud settings ${JSON.stringify(tags)} (${instance.id})`);
+    return reply({ ok: true, settings: readSettings({ ...instance.tags, ...tags }) }, 200);
+  }
+
   if (pathname === '/admin/cloud') {
     if (!hasAwsKey(env)) return reply({ error: 'AWS key not configured' }, 503);
     if (request.method === 'GET') {
       const instance = await findInstance(env);
-      return reply({ instance, status: toStatus(instance) }, 200);
+      return reply({ instance, status: toStatus(instance), settings: readSettings(instance?.tags) }, 200);
     }
     const { action } = (await request.json().catch(() => ({}))) as { action?: string };
     const instance = await findInstance(env);

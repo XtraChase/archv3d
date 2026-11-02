@@ -17,7 +17,7 @@ export interface Status {
   checkedAt: number;
   site: { up: boolean; ms: number | null; code?: number; error?: string };
   stream: { reachable: boolean; online?: boolean; busy?: boolean; waiting?: number };
-  cloud: { status: CloudState; instance: Instance | null; source?: 'admin' | 'public'; error?: string };
+  cloud: { status: CloudState; instance: Instance | null; settings?: CloudSettings; source?: 'admin' | 'public'; error?: string };
   local: { game: boolean; tunnel: boolean; running: boolean };
   servedBy: 'cloud' | 'local' | 'unknown' | null;
   overall: { key: OverallKey; label: string };
@@ -107,6 +107,18 @@ export interface Costs {
   cachedAt: number;
 }
 
+/** Limits of the cloud stream, stored as instance tags and read live by the gateway on the machine (minutes). */
+export interface CloudSettings {
+  /** Power the machine off after this long with nobody streaming or waiting (0 = never). */
+  idleShutdownMinutes: number;
+  /** Longest a session lasts while someone is waiting. */
+  sessionMinutes: number;
+  /** Disconnect a visitor with no input for this long when nobody is waiting. */
+  idleAloneMinutes: number;
+  /** The same when someone is waiting. */
+  idleWaitingMinutes: number;
+}
+
 export interface Settings {
   siteUrl: string;
   queueUrl: string;
@@ -126,6 +138,8 @@ export interface Api {
   runAction(name: ActionName): Promise<void>;
   getInsights(days: number): Promise<Insights>;
   getCosts(fresh?: boolean): Promise<Costs>;
+  getCloudSettings(): Promise<CloudSettings>;
+  saveCloudSettings(settings: Partial<CloudSettings>): Promise<CloudSettings>;
   deleteLead(id: number): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(changes: Partial<Settings> & { adminToken?: string }): Promise<Settings>;

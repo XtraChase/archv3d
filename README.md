@@ -71,6 +71,10 @@ whichever level the current visitor picked.
 The stream runs on an AWS g5.xlarge instead of this PC (turn it on or off in the archv3d Control app, or with
 `aws\stream-on.ps1` / `stream-off.ps1`; the app's "This PC" card runs it locally). The instance powers itself off after
 15 minutes with nobody streaming or waiting (`start_experience.bat cloud` -> gateway `--idle_shutdown_minutes 15`).
+That and the session/idle-disconnect limits can be changed in archv3d Control (Settings > Cloud settings, desktop or phone):
+the control Worker stores them as instance tags (`archv3d-idle-shutdown`, `-session-minutes`, `-idle-alone`,
+`-idle-waiting`) and the gateway (`--imds_settings`) re-reads them every minute, so a running machine follows a change.
+They need the gateway from `aws\upload.ps1` on the instance.
 While it's off, the home page shows the experiences as **Asleep**; opening one wakes the instance through the control
 Worker and joins the line automatically once the stream is up (about 4 minutes). `aws\stream-off.ps1` switches waking
 off (tag `archv3d-wake=off`), so the site shows **Unavailable**. Never run the desktop and the cloud stream at once:

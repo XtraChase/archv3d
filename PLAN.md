@@ -555,3 +555,7 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     localStorage and clears the hash. Unavailable on the phone: the stream on this PC, tray, notifications (no push service).
   - The provider list used to classify visitor networks moved to desktop/shared/providers.json (desktop and phone share it).
   - Fixed in both apps: a 503 "AWS key not configured" was reported as a missing ADMIN_TOKEN.
+- 2026-11-02 – Cloud settings in the apps: idle power-off (default 15 min, 0 = never), idle disconnect (15 alone / 3 with a
+  line) and session length (10). Control Worker POST /admin/cloud/settings -> instance tags (aws.ts SETTING_FIELDS, also the
+  ranges); GET /admin/cloud returns `settings`. servers/gateway.mjs with `--imds_settings` (added by start_experience.bat
+  cloud) reads the tags from the instance metadata every minute. Needs aws\upload.ps1 + a boot to take effect on the machine.

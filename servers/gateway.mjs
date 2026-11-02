@@ -27,10 +27,10 @@ const PORT = Number(arg('port', 80));
 const UPSTREAM = Number(arg('upstream', 8080));
 
 // A session can be cut short only while someone is waiting: after this long, with a warning first.
-const SESSION_SECONDS = Number(arg('session_minutes', 10)) * 60;
+let SESSION_SECONDS = Number(arg('session_minutes', 10)) * 60;
 // No mouse/touch/keyboard input for this long ends the session (shorter while someone is waiting).
-const IDLE_SECONDS_WAITING = Number(arg('idle_minutes_waiting', 3)) * 60;
-const IDLE_SECONDS_ALONE = Number(arg('idle_minutes_alone', 15)) * 60;
+let IDLE_SECONDS_WAITING = Number(arg('idle_minutes_waiting', 3)) * 60;
+let IDLE_SECONDS_ALONE = Number(arg('idle_minutes_alone', 15)) * 60;
 // Warning shown before the session ends for either reason.
 const WARNING_SECONDS = 60;
 // Time a called visitor has to connect before the turn passes to the next one.
@@ -39,7 +39,9 @@ const TURN_REFRESH_HOURS = 24;
 
 // Cloud VM only: power the machine off after this many minutes with nobody streaming or in line, so an on-demand VM
 // stops billing (0 = never; start_experience.bat never passes it, the desktop must not shut down).
-const IDLE_SHUTDOWN_MINUTES = Number(arg('idle_shutdown_minutes', 0));
+let IDLE_SHUTDOWN_MINUTES = Number(arg('idle_shutdown_minutes', 0));
+// Cloud VM: these four limits are also read from the instance's tags (see Cloud settings below), so they can be changed live.
+const IMDS_SETTINGS = process.argv.includes('--imds_settings');
 
 // Game watchdog (only with --game).
 const GAME = arg('game', '');
@@ -276,10 +278,11 @@ if (GAME) {
 
 let lastUsed = Date.now();
 let shuttingDown = false;
-if (IDLE_SHUTDOWN_MINUTES > 0) {
-  log(`idle shutdown: powering off after ${IDLE_SHUTDOWN_MINUTES} min with nobody streaming or waiting`);
+if (IDLE_SHUTDOWN_MINUTES > 0 || IMDS_SETTINGS) {
+  if (IDLE_SHUTDOWN_MINUTES > 0) log(`idle shutdown: powering off after ${IDLE_SHUTDOWN_MINUTES} min with nobody streaming or waiting`);
   setInterval(() => {
-    if (session || line.length > 0) {
+    // Also while the shutdown is switched off, so switching it on starts a full countdown.
+    if (session || line.length > 0 || IDLE_SHUTDOWN_MINUTES <= 0) {
       lastUsed = Date.now();
       return;
     }
@@ -293,6 +296,53 @@ if (IDLE_SHUTDOWN_MINUTES > 0) {
       }
     });
   }, 30000);
+}
+
+// ---- Cloud settings (cloud VM) --------------------------------------------------------------
+// The archv3d Control app stores the limits as tags on the instance (through the control Worker); they are read from
+// the instance metadata every minute, so a change applies at once, to sessions in progress too. Unset or invalid tags
+// keep the launch values. Ranges match control/src/aws.ts.
+
+const imds = 'http://169.254.169.254/latest';
+const inRange = (value, min, max, current) => {
+  const number = Number(value);
+  return value !== '' && Number.isFinite(number) && number >= min && number <= max ? number : current;
+};
+
+async function readCloudSettings() {
+  const token = await (
+    await fetch(`${imds}/api/token`, { method: 'PUT', headers: { 'X-aws-ec2-metadata-token-ttl-seconds': '60' }, signal: AbortSignal.timeout(3000) })
+  ).text();
+  const tag = async (name) => {
+    const response = await fetch(`${imds}/meta-data/tags/instance/${name}`, {
+      headers: { 'X-aws-ec2-metadata-token': token },
+      signal: AbortSignal.timeout(3000)
+    });
+    return response.ok ? (await response.text()).trim() : '';
+  };
+  const [shutdown, session, alone, waiting] = await Promise.all([
+    tag('archv3d-idle-shutdown'),
+    tag('archv3d-session-minutes'),
+    tag('archv3d-idle-alone'),
+    tag('archv3d-idle-waiting')
+  ]);
+  const before = `${IDLE_SHUTDOWN_MINUTES}/${SESSION_SECONDS}/${IDLE_SECONDS_ALONE}/${IDLE_SECONDS_WAITING}`;
+  IDLE_SHUTDOWN_MINUTES = inRange(shutdown, 0, 1440, IDLE_SHUTDOWN_MINUTES);
+  SESSION_SECONDS = inRange(session, 1, 120, SESSION_SECONDS / 60) * 60;
+  IDLE_SECONDS_ALONE = inRange(alone, 1, 240, IDLE_SECONDS_ALONE / 60) * 60;
+  IDLE_SECONDS_WAITING = inRange(waiting, 1, 60, IDLE_SECONDS_WAITING / 60) * 60;
+  if (before !== `${IDLE_SHUTDOWN_MINUTES}/${SESSION_SECONDS}/${IDLE_SECONDS_ALONE}/${IDLE_SECONDS_WAITING}`) {
+    log(
+      `cloud settings: power off after ${IDLE_SHUTDOWN_MINUTES || 'never'} min idle, session ${SESSION_SECONDS / 60} min while others wait, ` +
+        `idle disconnect ${IDLE_SECONDS_ALONE / 60} min alone / ${IDLE_SECONDS_WAITING / 60} min with a line`
+    );
+  }
+}
+
+if (IMDS_SETTINGS) {
+  const refreshCloudSettings = () => readCloudSettings().catch((error) => log(`cloud settings not read: ${error.message}`));
+  refreshCloudSettings();
+  setInterval(refreshCloudSettings, 60000);
 }
 
 // ---- TURN credentials -----------------------------------------------------------------------

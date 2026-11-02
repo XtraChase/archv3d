@@ -9,6 +9,38 @@ export interface Instance {
   wake: string;
   type: string;
   launchTime: string;
+  tags: Record<string, string>;
+}
+
+// Limits of the cloud stream, kept as instance tags: the gateway on the machine reads them live (servers/gateway.mjs,
+// "Cloud settings"), so they apply to a running machine and are kept while it sleeps.
+export interface CloudSettings {
+  /** Power the machine off after this many minutes with nobody streaming or waiting (0 = never). */
+  idleShutdownMinutes: number;
+  /** Longest a session lasts while someone is waiting. */
+  sessionMinutes: number;
+  /** Disconnect a visitor with no input for this long when nobody is waiting. */
+  idleAloneMinutes: number;
+  /** The same when someone is waiting. */
+  idleWaitingMinutes: number;
+}
+
+export const SETTING_FIELDS: Record<keyof CloudSettings, { tag: string; min: number; max: number; fallback: number }> = {
+  idleShutdownMinutes: { tag: 'archv3d-idle-shutdown', min: 0, max: 1440, fallback: 15 },
+  sessionMinutes: { tag: 'archv3d-session-minutes', min: 1, max: 120, fallback: 10 },
+  idleAloneMinutes: { tag: 'archv3d-idle-alone', min: 1, max: 240, fallback: 15 },
+  idleWaitingMinutes: { tag: 'archv3d-idle-waiting', min: 1, max: 60, fallback: 3 }
+};
+
+/** The settings in effect: a valid tag, else the gateway's launch value. */
+export function readSettings(tags: Record<string, string> | undefined): CloudSettings {
+  const result = {} as CloudSettings;
+  for (const [key, field] of Object.entries(SETTING_FIELDS) as [keyof CloudSettings, (typeof SETTING_FIELDS)[keyof CloudSettings]][]) {
+    const raw = tags?.[field.tag];
+    const value = raw === undefined || raw === '' ? NaN : Number(raw);
+    result[key] = Number.isInteger(value) && value >= field.min && value <= field.max ? value : field.fallback;
+  }
+  return result;
 }
 
 // The configured region, or us-west-2 when it's missing or not a region name (a dashboard secret named AWS_REGION
@@ -53,24 +85,28 @@ export async function findInstance(env: Env): Promise<Instance | null> {
   if (!item) return null;
   const state = item.match(/<instanceState>([\s\S]*?)<\/instanceState>/)?.[1] ?? '';
   const wake = item.match(/<item>\s*<key>archv3d-wake<\/key>\s*<value>([^<]*)<\/value>/)?.[1] ?? '';
+  const tags: Record<string, string> = {};
+  const tagSet = item.match(/<tagSet>([\s\S]*?)<\/tagSet>/)?.[1] ?? '';
+  for (const [, key, value] of tagSet.matchAll(/<key>([^<]*)<\/key>\s*<value>([^<]*)<\/value>/g)) tags[key] = value;
   return {
     id: tag(item, 'instanceId'),
     state: tag(state, 'name'),
     wake,
     type: tag(item, 'instanceType'),
-    launchTime: tag(item, 'launchTime')
+    launchTime: tag(item, 'launchTime'),
+    tags
   };
 }
 
 export const startInstance = (env: Env, id: string) => ec2(env, { Action: 'StartInstances', 'InstanceId.1': id });
 export const stopInstance = (env: Env, id: string) => ec2(env, { Action: 'StopInstances', 'InstanceId.1': id });
-export const setWake = (env: Env, id: string, on: boolean) =>
+export const setTags = (env: Env, id: string, tags: Record<string, string>) =>
   ec2(env, {
     Action: 'CreateTags',
     'ResourceId.1': id,
-    'Tag.1.Key': 'archv3d-wake',
-    'Tag.1.Value': on ? 'on' : 'off'
+    ...Object.fromEntries(Object.entries(tags).flatMap(([key, value], index) => [[`Tag.${index + 1}.Key`, key], [`Tag.${index + 1}.Value`, value]]))
   });
+export const setWake = (env: Env, id: string, on: boolean) => setTags(env, id, { 'archv3d-wake': on ? 'on' : 'off' });
 
 // ---- Cost Explorer (JSON API, us-east-1; $0.01 per request, so callers cache) --------------------------
 

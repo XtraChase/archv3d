@@ -107,7 +107,12 @@ export function Overview({ status, running, hasToken, onAction, onSettings }: Pr
             </>
           )}
         </dl>
-        <p className="note">Billed by the hour while running. It shuts itself down after 15 minutes without visitors.</p>
+        <p className="note">
+          Billed by the hour while running.{' '}
+          {cloud.settings?.idleShutdownMinutes === 0
+            ? 'It stays on until you turn it off.'
+            : `It shuts itself down after ${cloud.settings?.idleShutdownMinutes ?? 15} minutes without visitors.`}
+        </p>
         <div className="actions">
           {hasToken ? (
             cloudAllowed ? (

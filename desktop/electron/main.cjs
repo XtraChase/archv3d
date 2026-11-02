@@ -180,6 +180,8 @@ ipcMain.handle('action:run', (_event, name) => {
 });
 ipcMain.handle('insights:get', (_event, days) => backend.getInsights(Math.min(400, Math.max(1, Number(days) || 30))));
 ipcMain.handle('costs:get', (_event, fresh) => backend.getCosts(Boolean(fresh)));
+ipcMain.handle('cloud:getSettings', () => backend.getCloudSettings());
+ipcMain.handle('cloud:saveSettings', (_event, settings) => backend.saveCloudSettings(settings ?? {}));
 ipcMain.handle('leads:delete', (_event, id) => backend.deleteLead(Number(id)));
 ipcMain.handle('settings:get', () => backend.publicSettings());
 ipcMain.handle('settings:save', async (_event, changes) => {

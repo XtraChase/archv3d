@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('archv3d', {
   runAction: (name) => ipcRenderer.invoke('action:run', name),
   getInsights: (days) => ipcRenderer.invoke('insights:get', days),
   getCosts: (fresh) => ipcRenderer.invoke('costs:get', fresh),
+  getCloudSettings: () => ipcRenderer.invoke('cloud:getSettings'),
+  saveCloudSettings: (settings) => ipcRenderer.invoke('cloud:saveSettings', settings),
   deleteLead: (id) => ipcRenderer.invoke('leads:delete', id),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (changes) => ipcRenderer.invoke('settings:save', changes),
