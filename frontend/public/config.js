@@ -28,7 +28,13 @@ window.ARCHVIZ_CONFIG = {
       subtitle: 'Production campus',
       description: 'A furnished office and studio building on a landscaped hillside, with a courtyard and an overlook trail.',
       image: 'levels/studio.webp',
-      imageSrcset: 'levels/studio-640.webp 640w, levels/studio.webp 1280w'
+      imageSrcset: 'levels/studio-640.webp 640w, levels/studio.webp 1280w',
+      previews: [
+        { src: 'previews/studio/overview.webp', title: 'Overview' },
+        { src: 'previews/studio/southwest.webp', title: 'Southwest' },
+        { src: 'previews/studio/north.webp', title: 'North' },
+        { src: 'previews/studio/courtyard.webp', title: 'Courtyard' }
+      ]
     },
     {
       id: 'house',
@@ -36,7 +42,15 @@ window.ARCHVIZ_CONFIG = {
       subtitle: 'Two-story family home',
       description: 'A furnished house on a wooded lot: living room, kitchen, dining, bedrooms and the back yard patio.',
       image: 'levels/house.webp',
-      imageSrcset: 'levels/house-640.webp 640w, levels/house.webp 1280w'
+      imageSrcset: 'levels/house-640.webp 640w, levels/house.webp 1280w',
+      previews: [
+        { src: 'previews/house/front.webp', title: 'Front' },
+        { src: 'previews/house/backyard.webp', title: 'Back yard' },
+        { src: 'previews/house/livingroom.webp', title: 'Living room' },
+        { src: 'previews/house/kitchen.webp', title: 'Kitchen' },
+        { src: 'previews/house/dining.webp', title: 'Dining' },
+        { src: 'previews/house/bedroom.webp', title: 'Bedroom' }
+      ]
     }
   ]
 };

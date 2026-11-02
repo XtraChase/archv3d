@@ -247,7 +247,6 @@ a.experience-card:hover { transform: translateY(-4px); border-color: rgba(217, 1
   transition: transform 0.6s ease, filter 0.4s ease;
 }
 a.experience-card:hover .experience-media img { transform: scale(1.04); }
-.experience-card.is-unavailable .experience-media img { filter: grayscale(0.85) brightness(0.6); }
 .experience-body { position: relative; display: flex; flex-direction: column; flex: 1; padding: 26px 28px 28px; }
 .experience-index {
   position: absolute;
@@ -278,8 +277,6 @@ a.experience-card:hover .experience-media img { transform: scale(1.04); }
 }
 .experience-action svg { transition: transform 0.2s ease; }
 a.experience-card:hover .experience-action svg { transform: translateX(4px); }
-.experience-card.is-unavailable { cursor: not-allowed; }
-.experience-card.is-unavailable .experience-action { color: var(--muted); font-weight: 400; }
 
 /* Live status, top right of each experience's picture. */
 .status-badge {

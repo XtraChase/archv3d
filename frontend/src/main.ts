@@ -544,6 +544,7 @@ function applyCatalog(catalog: CatalogMessage) {
   if (level && level !== currentLevel) {
     currentLevel = level;
     applyBranding();
+    initPreview();
     history.replaceState(null, '', levelUrl(level.id));
   }
   hideLoading();
@@ -956,6 +957,40 @@ document.addEventListener('keydown', (event) => {
 
 // ---- Branding -----------------------------------------------------------------------------
 
+// Slideshow of stills behind the start overlay, so a visitor who can't stream right now (offline, asleep, in line)
+// still sees the project. The overlay hides itself once the stream plays, which hides the slideshow with it.
+let previewTimer = 0;
+function initPreview() {
+  window.clearInterval(previewTimer);
+  const box = $('#preview');
+  const caption = $('#preview-caption');
+  const stills = currentLevel.previews ?? [];
+  box.replaceChildren();
+  box.classList.toggle('hidden', stills.length === 0);
+  caption.classList.toggle('hidden', stills.length === 0);
+  if (!stills.length) return;
+  const slides = stills.map((still, index) => {
+    const img = document.createElement('img');
+    img.src = still.src;
+    img.alt = '';
+    img.decoding = 'async';
+    if (index === 0) img.classList.add('on');
+    box.append(img);
+    return img;
+  });
+  let current = 0;
+  const show = (index: number) => {
+    slides[current].classList.remove('on');
+    current = index;
+    slides[current].classList.add('on');
+    caption.textContent = `Preview · ${stills[current].title}`;
+  };
+  caption.textContent = `Preview · ${stills[0].title}`;
+  if (slides.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    previewTimer = window.setInterval(() => show((current + 1) % slides.length), 6000);
+  }
+}
+
 function applyBranding() {
   $('#title').textContent = currentLevel.title;
   $('#brand-title').textContent = currentLevel.title;
@@ -964,3 +999,4 @@ function applyBranding() {
 }
 applyBranding();
 renderLevels();
+initPreview();

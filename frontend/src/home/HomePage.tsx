@@ -66,13 +66,13 @@ function Experiences({ availability }: { availability: Availability }) {
 }
 
 const ACTION_TEXT: Partial<Record<Availability['status'], string>> = {
+  unavailable: 'Offline · view the preview',
   busy: 'Join the line',
   asleep: 'Wake it up · ready in about 3 min',
   starting: 'Starting up · join now'
 };
 
 function ExperienceCard({ level, index, availability }: { level: LevelConfig; index: number; availability: Availability }) {
-  const unavailable = availability.status === 'unavailable';
   const content = (
     <>
       <div className="experience-media">
@@ -96,29 +96,19 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
         {level.subtitle && <p className="experience-subtitle">{level.subtitle}</p>}
         {level.description && <p className="experience-description muted">{level.description}</p>}
         <span className="experience-action">
-          {unavailable ? (
-            'Offline right now, check back soon'
-          ) : (
-            <>
-              {ACTION_TEXT[availability.status] ?? 'Enter experience'} <ArrowIcon />
-            </>
-          )}
+          {ACTION_TEXT[availability.status] ?? 'Enter experience'} <ArrowIcon />
         </span>
       </div>
     </>
   );
 
-  // While the stream is switched off there is nothing to connect to, so the card isn't a link. Asleep or starting,
-  // the experience page wakes the cloud VM and joins the line by itself once it's up.
+  // Offline cards still open the experience page, which shows stills from the project instead of the stream.
+  // Asleep or starting, that page wakes the cloud VM and joins the line by itself once it's up.
   const waking = availability.status === 'asleep' || availability.status === 'starting';
   // The card's text runs together when read as one link ("Available Now01Movie Studio…"), so name it plainly; the
   // status badge inside still announces changes on its own.
   const label = `${level.title}: ${ACTION_TEXT[availability.status] ?? 'Enter experience'}`;
-  return unavailable ? (
-    <article className="experience-card is-unavailable" aria-disabled="true">
-      {content}
-    </article>
-  ) : (
+  return (
     <a className="experience-card" href={levelUrl(level.id, { wake: waking })} aria-label={label}>
       {content}
     </a>

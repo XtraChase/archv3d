@@ -10,6 +10,8 @@ export interface LevelConfig {
   image?: string;
   /** Optional srcset for the card image, e.g. 'levels/studio-640.webp 640w, levels/studio.webp 1280w'. */
   imageSrcset?: string;
+  /** Stills shown behind the start overlay while the live stream is offline, asleep or busy. Captured from the stream. */
+  previews?: { src: string; title: string }[];
 }
 
 export interface SiteConfig {
