@@ -5,6 +5,7 @@ servers/peer_options.json
 # Dependencies, build output, logs
 node_modules/
 frontend/dist/
+frontend/dist-ssr/
 logs/
 *.log
 frontend/*.zip

@@ -7,7 +7,11 @@ whichever level the current visitor picked.
 
 - `frontend/` – the browser UI (Vite + React + TypeScript + `@epicgames-ps/lib-pixelstreamingfrontend-ue5.8`):
   `index.html` is the home page in React (`src/home/`): the live experiences with an availability badge on each, then the
-  portfolio (`src/data/projects.json`, media in `public/portfolio/`) and about; `explore.html?level=<id>` the experience
+  portfolio (`src/data/projects.json`, media in `public/portfolio/`) and about. `npm run build` also writes a real page
+  per project at `/work/<slug>/` plus `sitemap.xml` (`scripts/prerender.mjs`, rendering the app at build time from
+  `src/home/server.tsx`). Each project folder needs an `og.jpg` (1200x630 link preview), and every picture or poster
+  wider than 1100px a `<name>-960.webp` copy for phones; the build fails if one is missing. Replace media under a new
+  file name: `/portfolio/` is cached for 7 days. Then about; `explore.html?level=<id>` the experience
   (views, orbit/walk, time of day, weather, switching level, queue). Runtime settings and the level list are in
   `frontend/public/config.js`; card images in `frontend/public/levels/<id>.webp` (plus a `-640.webp` for small screens,
   listed in `imageSrcset`; the `.jpg` stays as the link-preview image). To add a level: add it to

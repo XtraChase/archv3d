@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Lightbox } from './Lightbox';
-import { findProject, formatPublished, projects, type ImageMedia, type Media, type Project } from './projects';
+import { findProject, formatPublished, MEDIA_SIZES, mediaSrcSet, posterSrc, projects, type ImageMedia, type Media, type Project } from './projects';
 import { href } from './routing';
 import { BackIcon, PlayIcon, SoundIcon } from './icons';
 
@@ -53,6 +53,7 @@ export function ProjectPage({ slug }: { slug: string }) {
           <figure key={i} className="media-item">
             <MediaView
               item={item}
+              first={i === 0}
               label={mediaLabel(project, item)}
               onOpen={() => setLightboxIndex(images.indexOf(item as ImageMedia))}
             />
@@ -106,17 +107,29 @@ function ProjectLink({ project, label, align }: { project: Project; label: strin
   );
 }
 
-function MediaView({ item, label, onOpen }: { item: Media; label: string; onOpen: () => void }) {
+function MediaView({ item, first, label, onOpen }: { item: Media; first: boolean; label: string; onOpen: () => void }) {
   const ratio = `${item.width} / ${item.height}`;
   if (item.type === 'image') {
     return (
       <button className="media-image" style={{ aspectRatio: ratio }} onClick={onOpen} aria-label={`View full size: ${label}`}>
-        <img src={item.src} alt={label} loading="lazy" width={item.width} height={item.height} />
+        {/* The first picture is the largest thing on screen: fetch it straight away. */}
+        <img
+          src={item.src}
+          srcSet={mediaSrcSet(item.src, item.width)}
+          sizes={MEDIA_SIZES}
+          alt={label}
+          loading={first ? 'eager' : 'lazy'}
+          fetchPriority={first ? 'high' : 'auto'}
+          width={item.width}
+          height={item.height}
+        />
       </button>
     );
   }
-  if (item.type === 'video') return <AutoVideo src={item.src} poster={item.poster} ratio={ratio} label={label} audio={item.audio} />;
-  return <YouTube id={item.id} poster={item.poster} label={label} />;
+  if (item.type === 'video') {
+    return <AutoVideo src={item.src} poster={posterSrc(item.poster, item.width)} ratio={ratio} label={label} audio={item.audio} />;
+  }
+  return <YouTube id={item.id} poster={item.poster} width={item.width} label={label} />;
 }
 
 /**
@@ -178,7 +191,7 @@ function AutoVideo({ src, poster, ratio, label, audio }: { src: string; poster: 
 }
 
 /** YouTube player, loaded only when clicked (no third-party requests until then). */
-function YouTube({ id, poster, label }: { id: string; poster: string; label: string }) {
+function YouTube({ id, poster, width, label }: { id: string; poster: string; width: number; label: string }) {
   const [playing, setPlaying] = useState(false);
   return (
     <div className="media-youtube">
@@ -191,7 +204,7 @@ function YouTube({ id, poster, label }: { id: string; poster: string; label: str
         />
       ) : (
         <button className="youtube-poster" onClick={() => setPlaying(true)} aria-label={`Play video: ${label}`}>
-          <img src={poster} alt="" loading="lazy" />
+          <img src={poster} srcSet={mediaSrcSet(poster, width)} sizes={MEDIA_SIZES} alt="" loading="lazy" />
           <span className="youtube-play">
             <PlayIcon />
           </span>

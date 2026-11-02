@@ -1,5 +1,6 @@
 // Hash routes, so every page works from any static host without server rewrites
-// (Cloudflare Pages, the local signalling server, Netcade's iframe):
+// (Cloudflare Pages, the local signalling server, Netcade's iframe). Each project also has a real page at /work/<slug>/
+// for search engines (scripts/prerender.mjs), which opens the app on that project:
 //   #/                 home
 //   #/experiences, #/work, #/about   home, scrolled to that section
 //   #/work/<slug>      a portfolio project
@@ -27,10 +28,19 @@ export const href = {
   privacy: '#/privacy'
 };
 
+/**
+ * A project's own page (/work/<slug>/, written at build time by scripts/prerender.mjs) names its project on <body>,
+ * so it opens there without a hash.
+ */
+function initialHash() {
+  const project = document.body.dataset.project;
+  return location.hash || (project ? href.project(project) : '');
+}
+
 export function useRoute() {
-  const [hash, setHash] = useState(() => location.hash);
+  const [hash, setHash] = useState(initialHash);
   useEffect(() => {
-    const update = () => setHash(location.hash);
+    const update = () => setHash(initialHash());
     window.addEventListener('hashchange', update);
     return () => window.removeEventListener('hashchange', update);
   }, []);

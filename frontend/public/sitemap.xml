@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Portfolio pages are hash routes (#/work/<slug>), which sitemaps can't list; they're reached from the home page. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://archv3d.com/</loc>
-  </url>
-</urlset>

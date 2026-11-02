@@ -68,6 +68,20 @@ export function coverSrcSet(project: Project) {
   return project.coverLarge ? `${project.cover} 960w, ${project.coverLarge} 1600w` : undefined;
 }
 
+/**
+ * srcset for a gallery picture or poster: pictures wider than 1100px also have a 960px copy (<name>-960.webp) for
+ * phones. scripts/prerender.mjs fails the build if one is missing.
+ */
+export function mediaSrcSet(src: string, width: number) {
+  return width > 1100 && src.endsWith('.webp') ? `${src.replace(/\.webp$/, '-960.webp')} 960w, ${src} ${width}w` : undefined;
+}
+/** A video's poster shows only until the clip plays, so it's always the 960px copy when there is one. */
+export function posterSrc(poster: string, width: number) {
+  return width > 1100 && poster.endsWith('.webp') ? poster.replace(/\.webp$/, '-960.webp') : poster;
+}
+/** Gallery pictures span the content column. */
+export const MEDIA_SIZES = '(max-width: 1240px) 100vw, 1160px';
+
 /** Short label for a card: the first category, else the mediums. */
 export function projectLabel(project: Project) {
   return project.categories[0] ?? project.mediums.join(' · ');

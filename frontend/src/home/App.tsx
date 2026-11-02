@@ -62,7 +62,10 @@ export function App() {
       : project
         ? `${project.title}: ${[...project.categories, ...project.mediums].join(', ')} by ${profile.name}.`
         : siteDescription;
+    const url = project ? `https://archv3d.com/work/${project.slug}/` : 'https://archv3d.com/';
     document.title = title;
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', url);
+    setMeta('meta[property="og:url"]', url);
     setMeta('meta[name="description"]', description);
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
@@ -140,7 +143,8 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <span>
+        {/* The year can differ between a pre-rendered page's build and the visit. */}
+        <span suppressHydrationWarning>
           © {new Date().getFullYear()} {profile.name}
         </span>
         <span className="muted">Interactive spaces streamed live from Unreal Engine</span>
