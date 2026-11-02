@@ -538,3 +538,11 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   smtp.gmail.com with an app password; Gmail filters keep To:hello@ and From:contact@ out of Spam. DNS: SPF
   "v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all", DMARC "v=DMARC1; p=none". The site shows
   hello@archv3d.com (profile.email); the contact Worker still delivers to the verified Gmail destination.
+- 2026-11-02 CLOUD STREAM -> VULKAN + HARDWARE H.264. The D3D12 NVENC leak (see 2026-10-31) is specific to the D3D12 RHI: the encoder
+  there takes a Shared texture from FPixelCaptureCapturerRHI. Tested on the AWS A10G: D3D12 + CaptureUseFence=False still died at ~145 s;
+  `-vulkan` (NVENC through CUDA) streamed 10+ min at 30 fps, 5-16 Mbps, no restarts, render correct. DefaultEngine.ini now also cooks
+  `SF_VULKAN_SM6` (backup DefaultEngine.ini.bak-20261101-vulkan; first cook 36 min, later ones fast; default RHI stays DX12 so the
+  desktop is unchanged). aws/stream-session.ps1 launches `-vulkan` by default; VP8 fallback = tag archv3d-game-args
+  `-d3d12 -ini:Game:[/Script/PixelStreaming2Settings.PixelStreaming2PluginSettings]:Codec=VP8`. Bucket build uploaded after the Vulkan cook.
+  TODO: a 30+ min soak with several visitors cycling; the Interior/Lobby furniture and Interior/Lounge folders were missing from Main
+  when this build was cooked (57 actors deleted in the editor mid-cook).

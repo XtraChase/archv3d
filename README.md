@@ -69,9 +69,11 @@ Worker and joins the line automatically once the stream is up (about 4 minutes).
 off (tag `archv3d-wake=off`), so the site shows **Unavailable**. Never run the desktop and the cloud stream at once:
 they share the Cloudflare tunnel (a local start switches the cloud off first).
 
-The cloud stream uses **VP8**, not the project's H.264: on NVIDIA's cloud vGPU drivers the NVENC H.264 path leaks
-committed memory (~380 MB/s while a viewer streams) until the game dies. Extra game arguments for experiments go in the
-instance tag `archv3d-game-args` (applied at the next boot). Logs: `s3://archv3d-stream-194184403309/logs/`.
+The cloud stream runs the game with **`-vulkan`** and the project's hardware H.264: on NVIDIA's cloud vGPU drivers the
+default D3D12 NVENC path leaks committed memory (~380 MB/s while a viewer streams) until the game dies, and the Vulkan
+path (NVENC through CUDA) does not. The build must be cooked with Vulkan shaders (`SF_VULKAN_SM6` in DefaultEngine.ini).
+Software VP8 is the fallback (`-d3d12 -ini:Game:[/Script/PixelStreaming2Settings.PixelStreaming2PluginSettings]:Codec=VP8`).
+Extra game arguments for experiments go in the instance tag `archv3d-game-args` (applied at the next boot). Logs: `s3://archv3d-stream-194184403309/logs/`.
 Updating the cloud build: package the game, then `aws\upload.ps1` and restart the instance.
 
 ### Privacy and visitor insights
