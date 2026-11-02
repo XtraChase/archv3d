@@ -85,19 +85,23 @@ export function DesignToReality() {
 
       <div className="process-frame">
         {STEPS.map((item, index) => (
-          <img
+          <div
             key={item.src}
             id={`process-panel-${index}`}
             role="tabpanel"
             aria-labelledby={`process-tab-${index}`}
             aria-hidden={index !== step}
-            className={`process-image${index === step ? ' is-active' : ''}${index === 0 ? ' is-drawing' : ''}`}
-            src={item.src}
-            srcSet={mediaSrcSet(item.src, item.width)}
-            sizes="(max-width: 900px) 100vw, 700px"
-            alt={item.alt}
-            loading="lazy"
-          />
+            className={`process-panel${index === step ? ' is-active' : ''}`}
+          >
+            <img
+              className={`process-image${index === 0 ? ' is-drawing' : ''}`}
+              src={item.src}
+              srcSet={mediaSrcSet(item.src, item.width)}
+              sizes="(max-width: 900px) 100vw, 700px"
+              alt={item.alt}
+              loading="lazy"
+            />
+          </div>
         ))}
       </div>
 

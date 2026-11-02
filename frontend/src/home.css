@@ -699,17 +699,10 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   overflow: hidden;
   background: #fff; /* the drawing and the model are on white */
 }
-.process-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
+.process-panel { position: absolute; inset: 0; opacity: 0; transition: opacity 0.9s ease; }
+.process-panel.is-active { opacity: 1; }
+.process-image { display: block; width: 100%; height: 100%; object-fit: cover; }
 .process-image.is-drawing { object-fit: contain; }
-.process-image.is-active { opacity: 1; }
 .process-steps { grid-area: steps; display: grid; gap: 4px; }
 .process-step {
   position: relative;
