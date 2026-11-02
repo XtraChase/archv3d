@@ -204,6 +204,8 @@ interface QueueMessage {
   busy: boolean;
   waiting: number;
   position: number;
+  /** Upper bound on the wait for this visitor's place, in seconds (0 when unknown). */
+  waitSeconds?: number;
   active: boolean;
 }
 interface TurnMessage {
@@ -222,6 +224,15 @@ interface EndedMessage {
 type GatewayMessage = QueueMessage | TurnMessage | EndingMessage | EndedMessage;
 
 let queueSocket: WebSocket | null = null;
+// When the longest possible wait for this visitor's place runs out (0 = unknown), counted down on the lobby text.
+let waitEndsAt = 0;
+let waitTimer = 0;
+
+function waitText() {
+  if (!waitEndsAt) return '';
+  const minutes = Math.max(1, Math.ceil((waitEndsAt - Date.now()) / 60000));
+  return ` The wait is ${minutes === 1 ? 'about a minute' : `up to ${minutes} minutes`}, often less.`;
+}
 let queueState: QueueMessage | null = null;
 // Whether the gateway has been tried at least once since the page loaded.
 let reachedGateway = false;
@@ -314,6 +325,7 @@ function onGatewayMessage(message: GatewayMessage) {
   reachedGateway = true;
   if (message.type === 'queue') {
     queueState = message;
+    waitEndsAt = message.waitSeconds ? Date.now() + message.waitSeconds * 1000 : 0;
     cloud = 'off';
     if (autoJoin && !inLine && !inSession) {
       autoJoin = false;
@@ -369,9 +381,11 @@ function renderLobby() {
   const { online, busy, waiting, position } = queueState;
   if (inLine) {
     start.textContent = 'Leave the line';
+    window.clearTimeout(waitTimer);
+    waitTimer = window.setTimeout(() => inLine && !inSession && renderLobby(), 20000);
     setStatus(
       online
-        ? `You're number ${position} in line (${waiting} waiting). It starts automatically when it's your turn, so keep this page open.`
+        ? `You're number ${position} in line (${waiting} waiting).${waitText()} It starts automatically when it's your turn, so keep this page open.`
         : `${RESTARTING_TEXT} You keep your place in line (number ${position}).`,
       !online
     );
@@ -380,7 +394,7 @@ function renderLobby() {
   start.textContent = busy || !online ? 'Join the line' : 'Start experience';
   if (failureText) setStatus(failureText, true);
   else if (!online) setStatus(`${RESTARTING_TEXT} Join the line to get in as soon as it's back.`, true);
-  else if (busy) setStatus(`Someone is exploring right now${waiting ? `, ${waiting} waiting in line` : ''}.`);
+  else if (busy) setStatus(`Someone is exploring right now${waiting ? `, ${waiting} waiting in line` : ''}.${waitText()}`);
   else setStatus('');
 }
 

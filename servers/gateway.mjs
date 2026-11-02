@@ -78,14 +78,29 @@ function send(ws, message) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
 }
 
+/**
+ * Upper bound, in seconds, on the wait for the visitor at 1-based `position`: the current session's remaining time,
+ * then one full session for everyone ahead. Sessions often end earlier (idle, closed tabs), so it is shown as "up to".
+ */
+function waitUpperBound(position) {
+  if (!session || position < 1) return 0;
+  const now = Date.now();
+  const endsAt = session.deadline || (session.startedAt || now) + SESSION_SECONDS * 1000;
+  const first = Math.max(WARNING_SECONDS, (endsAt - now) / 1000);
+  return Math.round(first + (position - 1) * SESSION_SECONDS);
+}
+
 function broadcast() {
   for (const ws of visitors) {
+    const position = line.indexOf(ws) + 1;
     send(ws, {
       type: 'queue',
       online,
       busy: session !== null,
       waiting: line.length,
-      position: line.indexOf(ws) + 1,
+      position,
+      // Visitors not in line yet are told what joining now would mean.
+      waitSeconds: waitUpperBound(position || line.length + 1),
       active: session?.ws === ws
     });
   }
