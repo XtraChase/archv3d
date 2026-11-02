@@ -706,7 +706,7 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 .service-icon { color: var(--accent); }
 .service-card h3 { margin: 18px 0 10px; font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.1; }
 .service-card > p { margin: 0; }
-.service-includes { list-style: none; margin: 20px 0 28px; padding: 0; display: grid; gap: 8px; font-size: 15px; }
+.service-includes { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 8px; font-size: 15px; }
 .service-includes li { position: relative; padding-left: 20px; }
 .service-includes li::before {
   content: '';
@@ -719,17 +719,6 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   background: var(--accent);
   transform: rotate(45deg);
 }
-.service-quote {
-  margin-top: auto;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--accent);
-  font-weight: 500;
-}
-.service-quote:hover { text-decoration: underline; }
-.service-quote:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 /* Text for screen readers only. */
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 

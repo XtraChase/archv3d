@@ -1,7 +1,5 @@
-import { ArrowIcon } from './icons';
-
-// Home page section: what Chase offers. No prices: every project is quoted, and each card opens the quote form with
-// its services already ticked (the names must match SERVICES in ContactDialog.tsx and the contact Worker).
+// Home page section: what Chase offers. No prices (every project is quoted) and no per-card buttons: visitors use the
+// Contact button.
 
 const common = { width: 36, height: 36, viewBox: '0 0 32 32', fill: 'none', 'aria-hidden': true } as const;
 const line = { stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
@@ -11,7 +9,6 @@ const SERVICES = [
     title: 'CAD drafting',
     text: 'Construction drawings drafted in Revit and AutoCAD: plans, elevations, sections and details, laid out on titled sheets.',
     includes: ['Floor plans and elevations', 'Sections and construction details', 'PDF and DWG sheet sets'],
-    quote: ['CAD drafting'],
     icon: (
       <svg {...common}>
         <path d="M5 27h22M5 27V9l9-4v22M14 13h13v14M18 17h5M18 21h5" {...line} />
@@ -22,7 +19,6 @@ const SERVICES = [
     title: 'BIM / Revit model',
     text: 'A full Revit model of a new design or an existing home, the one source the drawings, views and visuals come from.',
     includes: ['New designs or as-built models', 'Drawings and views from the model', 'Native RVT files or exported views'],
-    quote: ['BIM / Revit model'],
     icon: (
       <svg {...common}>
         <path d="M16 4 27 10v12l-11 6-11-6V10l11-6Zm0 0v24M5 10l11 6 11-6" {...line} />
@@ -33,7 +29,6 @@ const SERVICES = [
     title: 'Still renderings',
     text: 'Photoreal interior and exterior images rendered in Unreal Engine, for marketing, listings or design review.',
     includes: ['Exterior and interior views', 'Daylight, dusk and seasonal looks', 'High-resolution images for print and web'],
-    quote: ['Still renderings'],
     icon: (
       <svg {...common}>
         <rect x="4" y="7" width="24" height="18" rx="2" {...line} />
@@ -46,7 +41,6 @@ const SERVICES = [
     title: 'Walkthroughs & Unreal tours',
     text: 'Animated walkthrough videos, and interactive tours streamed to any browser like the live experiences on this site, with nothing for your clients to install.',
     includes: ['Cinematic walkthrough videos', 'Interactive Unreal Engine tours', 'Browser streaming with a guided tour'],
-    quote: ['Animated walkthrough', 'Interactive Unreal tour'],
     icon: (
       <svg {...common}>
         <circle cx="16" cy="16" r="12" {...line} />
@@ -56,7 +50,7 @@ const SERVICES = [
   }
 ];
 
-export function Services({ onQuote }: { onQuote: (services: string[]) => void }) {
+export function Services() {
   return (
     <section id="services" className="section">
       <div className="section-head">
@@ -78,10 +72,6 @@ export function Services({ onQuote }: { onQuote: (services: string[]) => void })
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <button className="service-quote" onClick={() => onQuote(service.quote)}>
-              Get a quote <ArrowIcon />
-              <span className="visually-hidden"> for {service.title}</span>
-            </button>
           </article>
         ))}
       </div>

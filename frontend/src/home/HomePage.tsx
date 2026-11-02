@@ -15,7 +15,7 @@ export function HomePage({ availability, onContact }: { availability: Availabili
       <Hero />
       <Experiences availability={availability} />
       <DesignToReality />
-      <Services onQuote={onContact} />
+      <Services />
       <Portfolio />
       <About onContact={() => onContact()} />
     </>
