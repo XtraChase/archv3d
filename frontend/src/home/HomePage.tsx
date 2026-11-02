@@ -7,7 +7,9 @@ import { profile } from './profile';
 import { ArrowIcon, ExternalIcon, PlayIcon } from './icons';
 import { HeroBuilding } from './HeroBuilding';
 import { DesignToReality } from './DesignToReality';
-import { Services } from './Services';
+// Services section hidden for now (may come back): uncomment this import, <Services /> below and the Services link in
+// App.tsx's header.
+// import { Services } from './Services';
 
 export function HomePage({ availability, onContact }: { availability: Availability; onContact: (services?: string[]) => void }) {
   return (
@@ -15,7 +17,7 @@ export function HomePage({ availability, onContact }: { availability: Availabili
       <Hero />
       <Experiences availability={availability} />
       <DesignToReality />
-      <Services onQuote={onContact} />
+      {/* <Services onQuote={onContact} /> */}
       <Portfolio />
       <About onContact={() => onContact()} />
     </>

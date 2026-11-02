@@ -141,7 +141,7 @@ function Header({ onContact }: { onContact: () => void }) {
         </a>
         <nav className="site-nav" aria-label="Main">
           <a href={href.section('experiences')}>Experiences</a>
-          <a href={href.section('services')}>Services</a>
+          {/* Services hidden for now, with its section in HomePage.tsx: <a href={href.section('services')}>Services</a> */}
           <a href={href.section('work')}>Portfolio</a>
           <a href={href.section('about')}>About</a>
           <button className="nav-contact" onClick={onContact}>
