@@ -5,12 +5,14 @@ import { href } from './routing';
 import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
 import { HeroBuilding } from './HeroBuilding';
+import { DesignToReality } from './DesignToReality';
 
 export function HomePage({ availability, onContact }: { availability: Availability; onContact: () => void }) {
   return (
     <>
       <Hero />
       <Experiences availability={availability} />
+      <DesignToReality />
       <Portfolio />
       <About onContact={onContact} />
     </>

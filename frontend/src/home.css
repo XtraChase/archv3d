@@ -681,9 +681,86 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 .form-actions .button:disabled { opacity: 0.6; cursor: progress; transform: none; }
 .contact-sent .muted { margin: 14px 0 28px; }
 
+/* ---- Design to reality (DesignToReality.tsx) ------------------------------------------------- */
+
+.process {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+  grid-template-areas: 'head head' 'frame steps' 'frame link';
+  column-gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+}
+.process .section-head { grid-area: head; }
+.process-frame {
+  grid-area: frame;
+  position: relative;
+  aspect-ratio: 1920 / 1470;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff; /* the drawing and the model are on white */
+}
+.process-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.process-image.is-drawing { object-fit: contain; }
+.process-image.is-active { opacity: 1; }
+.process-steps { grid-area: steps; display: grid; gap: 4px; }
+.process-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 16px;
+  padding: 18px 4px 18px 0;
+  border-top: 1px solid var(--line-strong);
+  text-align: left;
+  color: var(--muted);
+  overflow: hidden;
+  transition: color 0.2s ease;
+}
+.process-step:hover, .process-step.is-active { color: var(--text); }
+.process-step:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.process-number { grid-row: span 2; font-size: 13px; letter-spacing: 0.14em; color: var(--accent); padding-top: 9px; }
+.process-label { font-family: var(--serif); font-size: 32px; line-height: 1.1; }
+.process-detail { font-size: 15px; color: var(--muted); }
+.process-step.is-active { border-top-color: var(--accent); }
+.process-progress {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--text);
+  transform-origin: left;
+  animation: process-progress 4.5s linear forwards;
+}
+@keyframes process-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.process-link {
+  grid-area: link;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.process-link:hover { text-decoration: underline; }
+
 /* ---- Small screens ---------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
+  .process { grid-template-columns: 1fr; grid-template-areas: 'head' 'frame' 'steps' 'link'; }
+  .process-steps { grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .process-step { grid-template-columns: 1fr; padding-top: 12px; }
+  .process-number { grid-row: auto; padding-top: 0; }
+  .process-label { font-size: 22px; }
+  .process-detail { display: none; }
   .work-grid { grid-template-columns: 1fr 1fr; gap: 32px 20px; }
   .work-card, .work-card:nth-child(n) { grid-column: span 1; }
   .work-card:nth-child(3n + 1) { grid-column: span 2; }
