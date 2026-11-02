@@ -3,7 +3,8 @@ export const profile = {
   name: 'Chase Richards',
   role: 'Technical Artist & CAD Drafter',
   location: 'Bozeman, Montana',
-  email: 'james.chase.richards@gmail.com',
+  // Public address: Cloudflare Email Routing forwards it to Chase's Gmail (the contact Worker delivers there directly).
+  email: 'hello@archv3d.com',
   /** Profiles elsewhere (About section and footer); also the Person's sameAs in index.html. */
   links: [
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/james-chase-richards/' },

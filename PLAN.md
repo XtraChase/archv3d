@@ -532,3 +532,9 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
     first. Tested with wrangler dev (.eml in contact/.wrangler/tmp/email).
   - Home: "From drawing to built" (Madison Ridge elevation, Revit model, built photo) and a 45 s showreel at the top of
     the portfolio (portfolio/reel/showreel-2026.mp4, cut from the three clips with sound).
+- 2026-11-02 EMAIL: Cloudflare Email Routing had never been enabled on archv3d.com (no MX/SPF), so the contact Worker's
+  send_email could not deliver. Enabled it (MX route1-3.mx.cloudflare.net, DKIM cf2024-1, SPF), verified
+  james.chase.richards@gmail.com as destination, rule hello@archv3d.com -> Gmail. Gmail "Send mail as" hello@ via
+  smtp.gmail.com with an app password; Gmail filters keep To:hello@ and From:contact@ out of Spam. DNS: SPF
+  "v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all", DMARC "v=DMARC1; p=none". The site shows
+  hello@archv3d.com (profile.email); the contact Worker still delivers to the verified Gmail destination.
