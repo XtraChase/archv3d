@@ -20,6 +20,12 @@ export const PlayIcon = () => (
   </svg>
 );
 
+export const ExternalIcon = () => (
+  <svg {...common}>
+    <path d="M9 6h9v9M18 6 7 17" {...stroke} />
+  </svg>
+);
+
 export const CloseIcon = () => (
   <svg {...common}>
     <path d="M6 6l12 12M18 6L6 18" {...stroke} />

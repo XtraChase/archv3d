@@ -4,7 +4,7 @@ import { coverSrcSet, formatPublished, hasMotion, posterSrc, projectLabel, proje
 import { AutoVideo } from './ProjectPage';
 import { href } from './routing';
 import { profile } from './profile';
-import { ArrowIcon, PlayIcon } from './icons';
+import { ArrowIcon, ExternalIcon, PlayIcon } from './icons';
 import { HeroBuilding } from './HeroBuilding';
 import { DesignToReality } from './DesignToReality';
 import { Services } from './Services';
@@ -229,6 +229,20 @@ function About({ onContact }: { onContact: () => void }) {
               ))}
             </ul>
           </div>
+        </div>
+        <div className="about-links">
+          <h3>Elsewhere</h3>
+          <ul>
+            {[...profile.links, profile.press].map((link) => (
+              <li key={link.url}>
+                {/* rel="me": these profiles are Chase's own (the press article is about him, so it isn't). */}
+                <a href={link.url} target="_blank" rel={link === profile.press ? 'noopener noreferrer' : 'me noopener noreferrer'}>
+                  {link.label} <ExternalIcon />
+                  <span className="visually-hidden"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

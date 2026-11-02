@@ -4,6 +4,13 @@ export const profile = {
   role: 'Technical Artist & CAD Drafter',
   location: 'Bozeman, Montana',
   email: 'james.chase.richards@gmail.com',
+  /** Profiles elsewhere (About section and footer); also the Person's sameAs in index.html. */
+  links: [
+    { label: 'LinkedIn', url: 'https://www.linkedin.com/in/james-chase-richards/' },
+    { label: 'YouTube', url: 'https://www.youtube.com/@virtual-imagery' }
+  ],
+  /** Press: an article about the work (About section; subjectOf in index.html). */
+  press: { label: 'Interview on 80 Level', url: 'https://80.lv/articles/designing-assets-for-a-mars-colony-environment/' },
   summary:
     'With deep expertise in architectural CAD, BIM workflows, and advanced 3D visualization, I help architects, ' +
     'developers, and homeowners transform complex blueprints into clear, immersive spatial experiences. Every ' +

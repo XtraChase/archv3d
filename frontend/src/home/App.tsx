@@ -162,6 +162,13 @@ function Footer() {
           © {new Date().getFullYear()} {profile.name}
         </span>
         <span className="muted">Interactive spaces streamed live from Unreal Engine</span>
+        <nav className="footer-links" aria-label="Elsewhere">
+          {profile.links.map((link) => (
+            <a key={link.url} href={link.url} target="_blank" rel="me noopener noreferrer">
+              {link.label}
+            </a>
+          ))}
+        </nav>
         <a href={href.privacy}>Privacy</a>
         <a href={`mailto:${profile.email}`}>{profile.email}</a>
       </div>
