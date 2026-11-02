@@ -81,7 +81,15 @@ export function App() {
     }
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [contactOpen, setContactOpen] = useState(false);
+  // The live experience links here with ?contact=<level id> (opened in a new tab so the session keeps running).
+  const [contactSource] = useState(() => new URLSearchParams(location.search).get('contact'));
+  const [contactOpen, setContactOpen] = useState(contactSource !== null);
+  useEffect(() => {
+    if (contactSource === null) return;
+    const url = new URL(location.href);
+    url.searchParams.delete('contact');
+    history.replaceState(null, '', url.href);
+  }, [contactSource]);
   const openContact = useCallback(() => setContactOpen(true), []);
   const closeContact = useCallback(() => setContactOpen(false), []);
 
@@ -99,7 +107,7 @@ export function App() {
         )}
       </main>
       <Footer />
-      {contactOpen && <ContactDialog onClose={closeContact} />}
+      {contactOpen && <ContactDialog onClose={closeContact} source={contactSource ?? undefined} />}
     </>
   );
 }

@@ -465,6 +465,8 @@ function clearConnectTimer() {
 
 stream.addEventListener('videoInitialized', () => {
   clearConnectTimer();
+  armCta();
+  $('#cta-end').classList.add('hidden');
   $('#overlay').classList.add('hidden');
   $('#ui').classList.remove('hidden');
   $('#queue-pill').classList.toggle('hidden', !queueState?.waiting);
@@ -478,6 +480,8 @@ stream.addEventListener('videoInitialized', () => {
 // visitor's setting right after that.
 stream.addEventListener('playStream', () => window.setTimeout(() => applySound(true), 0));
 stream.addEventListener('webRtcDisconnected', () => {
+  stopTour();
+  showEndCta();
   streamOpen = false;
   clearConnectTimer();
   showNotice(null);
@@ -543,6 +547,7 @@ function applyCatalog(catalog: CatalogMessage) {
   const level = findLevel(catalog.level);
   if (level && level !== currentLevel) {
     currentLevel = level;
+    stopTour();
     applyBranding();
     initPreview();
     history.replaceState(null, '', levelUrl(level.id));
@@ -551,6 +556,7 @@ function applyCatalog(catalog: CatalogMessage) {
   renderLevels();
 
   cameras = catalog.cameras;
+  applySharedView();
   const categories = [...new Set(cameras.map((camera) => camera.category))];
   if (!categories.includes(activeCategory)) activeCategory = categories[0] ?? '';
 
@@ -583,15 +589,17 @@ function applyCatalog(catalog: CatalogMessage) {
       heading.textContent = group.set;
       const swatches = document.createElement('div');
       swatches.className = 'swatches';
-      for (const option of group.options) {
+      group.options.forEach((option, index) => {
         const button = document.createElement('button');
         button.textContent = option;
+        // The first option is the level's own look.
+        button.classList.toggle('active', index === 0);
         button.addEventListener('click', () => {
           swatches.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === button));
           send({ cmd: 'variant', set: group.set, option });
         });
         swatches.append(button);
-      }
+      });
       wrapper.append(heading, swatches);
       return wrapper;
     })
@@ -627,11 +635,211 @@ function renderViews() {
   );
 }
 
+// ---- Calls to action ----------------------------------------------------------------------
+// A prompt after a few minutes of exploring, and a link on the start overlay once a session has ended. Both open the
+// home page's contact form in a new tab (?contact=<level>), so the visitor's place in the stream is never lost.
+const CTA_DELAY_MS = 3 * 60 * 1000;
+let ctaTimer = 0;
+let ctaShown = false;
+let hasExplored = false;
+const contactHref = () => {
+  const url = new URL('./', location.href);
+  url.searchParams.set('contact', currentLevel.id);
+  return url.href;
+};
+
+function armCta() {
+  hasExplored = true;
+  if (ctaShown) return;
+  window.clearTimeout(ctaTimer);
+  ctaTimer = window.setTimeout(() => {
+    ctaShown = true;
+    $<HTMLAnchorElement>('#cta-toast-link').href = contactHref();
+    $('#cta-toast').classList.remove('hidden');
+    window.setTimeout(() => $('#cta-toast').classList.add('hidden'), 25000);
+  }, CTA_DELAY_MS);
+}
+$('#cta-toast-close').addEventListener('click', () => $('#cta-toast').classList.add('hidden'));
+$('#cta-toast-link').addEventListener('click', () => $('#cta-toast').classList.add('hidden'));
+
+function showEndCta() {
+  window.clearTimeout(ctaTimer);
+  $('#cta-toast').classList.add('hidden');
+  const link = $<HTMLAnchorElement>('#cta-end');
+  link.href = contactHref();
+  link.classList.toggle('hidden', !hasExplored);
+}
+
+// ---- Touch walking stick ------------------------------------------------------------------
+// The walk pawn reads held keys (W/A/S/D, Shift to run), so the stick feeds the same key events the library already
+// forwards to Unreal. Dragging anywhere else on the stream looks around (FakeMouseWithTouches).
+const touchDevice = window.matchMedia('(pointer: coarse)').matches;
+const stick = $('#joystick');
+const stickKnob = $('#joystick-knob');
+const STICK_KEYS: Record<string, { key: string; code: string; keyCode: number }> = {
+  w: { key: 'w', code: 'KeyW', keyCode: 87 },
+  a: { key: 'a', code: 'KeyA', keyCode: 65 },
+  s: { key: 's', code: 'KeyS', keyCode: 83 },
+  d: { key: 'd', code: 'KeyD', keyCode: 68 },
+  shift: { key: 'Shift', code: 'ShiftLeft', keyCode: 16 }
+};
+const heldKeys = new Set<string>();
+
+function holdKey(name: string, down: boolean) {
+  if (down === heldKeys.has(name)) return;
+  if (down) heldKeys.add(name);
+  else heldKeys.delete(name);
+  const { key, code, keyCode } = STICK_KEYS[name];
+  document.dispatchEvent(
+    new KeyboardEvent(down ? 'keydown' : 'keyup', { key, code, keyCode, which: keyCode, bubbles: true, cancelable: true })
+  );
+}
+
+function releaseStick() {
+  for (const name of [...heldKeys]) holdKey(name, false);
+  stickKnob.style.transform = '';
+}
+
+function moveStick(event: PointerEvent) {
+  const box = stick.getBoundingClientRect();
+  const radius = box.width / 2;
+  let dx = event.clientX - (box.left + radius);
+  let dy = event.clientY - (box.top + radius);
+  const length = Math.hypot(dx, dy);
+  if (length > radius) {
+    dx = (dx / length) * radius;
+    dy = (dy / length) * radius;
+  }
+  stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+  const x = dx / radius;
+  const y = dy / radius;
+  holdKey('w', y < -0.3);
+  holdKey('s', y > 0.3);
+  holdKey('a', x < -0.3);
+  holdKey('d', x > 0.3);
+  holdKey('shift', Math.hypot(x, y) > 0.92);
+  reportActivity();
+}
+
+stick.addEventListener('pointerdown', (event) => {
+  stick.setPointerCapture(event.pointerId);
+  moveStick(event);
+  event.preventDefault();
+});
+stick.addEventListener('pointermove', (event) => stick.hasPointerCapture(event.pointerId) && moveStick(event));
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) stick.addEventListener(type, releaseStick);
+window.addEventListener('blur', releaseStick);
+
+function updateStick(mode: string) {
+  const show = touchDevice && mode === 'walk';
+  stick.classList.toggle('hidden', !show);
+  if (!show) releaseStick();
+}
+
+// ---- Guided tour --------------------------------------------------------------------------
+// Steps through the level's views in catalog order. Any touch of the stream or a key press ends it, so the visitor
+// can take over at any point; it also reports activity so the idle timeout doesn't end a session that is just watching.
+const TOUR_ORBIT_MS = 7000;
+const TOUR_WALK_MS = 9000;
+let touring = false;
+let tourIndex = 0;
+let tourTimer = 0;
+
+function tourOrder() {
+  // Aerial/orbit views first, then walk-through views, each in catalog order.
+  return [...cameras.filter((c) => c.mode === 'orbit'), ...cameras.filter((c) => c.mode !== 'orbit')];
+}
+
+function startTour() {
+  const views = tourOrder();
+  if (views.length === 0) return;
+  touring = true;
+  tourIndex = 0;
+  $('#tour-bar').classList.remove('hidden');
+  tourStep();
+}
+
+function tourStep() {
+  const views = tourOrder();
+  const camera = views[tourIndex];
+  if (!touring || !camera) return stopTour();
+  const dwell = camera.mode === 'walk' ? TOUR_WALK_MS : TOUR_ORBIT_MS;
+  send({ cmd: 'camera', id: camera.id });
+  reportActivity();
+  $('#tour-step').textContent = `${tourIndex + 1} / ${views.length}`;
+  $('#tour-name').textContent = camera.name;
+  const bar = $('#tour-progress');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = `width ${dwell}ms linear`;
+  bar.style.width = '100%';
+  tourTimer = window.setTimeout(() => {
+    tourIndex++;
+    if (tourIndex >= views.length) stopTour();
+    else tourStep();
+  }, dwell);
+}
+
+function stopTour() {
+  touring = false;
+  window.clearTimeout(tourTimer);
+  $('#tour-bar').classList.add('hidden');
+}
+
+$('#tour-start').addEventListener('click', startTour);
+$('#tour-stop').addEventListener('click', stopTour);
+for (const type of ['pointerdown', 'wheel', 'keydown']) {
+  $('#stage').addEventListener(type, () => touring && stopTour(), { passive: true });
+}
+window.addEventListener('keydown', (event) => {
+  if (touring && ['w', 'a', 's', 'd', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) stopTour();
+});
+
+// ---- Shareable views ----------------------------------------------------------------------
+// ?cam=<view id>&t=<hour>&w=<weather> restores a view; the share button builds such a link from the current state.
+const sharedView = {
+  cam: urlParams.get('cam'),
+  hour: Number(urlParams.get('t') ?? NaN),
+  weather: urlParams.get('w')
+};
+let pendingSharedView = !!(sharedView.cam || Number.isFinite(sharedView.hour) || sharedView.weather);
+let lastState: StateMessage | null = null;
+
+function applySharedView() {
+  if (!pendingSharedView) return;
+  pendingSharedView = false;
+  if (Number.isFinite(sharedView.hour)) send({ cmd: 'time', hour: sharedView.hour });
+  if (sharedView.weather) send({ cmd: 'weather', value: sharedView.weather });
+  if (sharedView.cam && cameras.some((camera) => camera.id === sharedView.cam)) send({ cmd: 'camera', id: sharedView.cam });
+}
+
+$('#btn-share').addEventListener('click', async () => {
+  const url = new URL('explore.html', location.href);
+  url.search = '';
+  url.searchParams.set('level', currentLevel.id);
+  if (lastState) {
+    url.searchParams.set('cam', lastState.camera);
+    url.searchParams.set('t', (Math.round(lastState.hour * 10) / 10).toString());
+    if (lastState.weather) url.searchParams.set('w', lastState.weather);
+  }
+  try {
+    await navigator.clipboard.writeText(url.href);
+    showHint('Link copied. Anyone who opens it lands on this view');
+  } catch {
+    // Clipboard blocked (insecure context or permissions): fall back to the share sheet where there is one.
+    if (navigator.share) void navigator.share({ title: document.title, url: url.href }).catch(() => undefined);
+    else showHint(url.href);
+  }
+});
+
 function applyState(state: StateMessage) {
+  lastState = state;
   activeCamera = state.camera;
   $$('#view-list button').forEach((b) => b.classList.toggle('active', b.dataset.id === activeCamera));
   $$('.segmented button').forEach((b) => b.classList.toggle('active', b.dataset.mode === state.mode));
   $('#zoom').classList.toggle('hidden', state.mode !== 'orbit');
+  updateStick(state.mode);
 
   if (!sunDragging) {
     $<HTMLInputElement>('#sun-slider').value = String(state.hour);

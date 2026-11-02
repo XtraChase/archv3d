@@ -25,6 +25,7 @@
         <p id="subtitle" class="muted">Interactive architectural experience</p>
         <button id="start" class="primary">Start experience</button>
         <p id="status" class="status" aria-live="polite"></p>
+        <a class="cta-end hidden" id="cta-end" href="./" target="_blank" rel="noopener">Like what you saw? Start a project &rarr;</a>
         <a class="back-link" href="./">&larr; All projects</a>
       </div>
     </section>
@@ -57,6 +58,9 @@
             </div>
           </div>
           <button class="icon" id="btn-help" title="Controls (H)" aria-label="Controls">?</button>
+          <button class="icon" id="btn-share" title="Copy a link to this view" aria-label="Copy a link to this view">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a3 3 0 1 1 4.2 4.2l-1.8 1.8-1.4-1.4 1.8-1.8a1 1 0 1 0-1.4-1.4L12 13.4a1 1 0 0 1-1.4 0Zm2.8-2.8a1 1 0 0 1 0 1.4L9.9 15.5a3 3 0 1 1-4.2-4.2l1.8-1.8 1.4 1.4-1.8 1.8a1 1 0 1 0 1.4 1.4L12 10.6a1 1 0 0 1 1.4 0Z"/></svg>
+          </button>
           <button class="icon" id="btn-shot" title="Save screenshot" aria-label="Save screenshot">
             <svg viewBox="0 0 24 24"><path d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9Zm3 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
           </button>
@@ -89,8 +93,25 @@
         </button>
       </nav>
 
+      <!-- Touch devices, walk mode: a stick that holds W/A/S/D (and Shift at full tilt) for the walker -->
+      <div class="joystick hidden" id="joystick" aria-label="Walking stick" role="application">
+        <div class="joystick-knob" id="joystick-knob"></div>
+      </div>
+
+      <!-- Guided tour: steps through every view, with a caption and a way out -->
+      <div class="tour-bar hidden" id="tour-bar" role="status" aria-live="polite">
+        <span class="tour-step" id="tour-step"></span>
+        <span class="tour-name" id="tour-name"></span>
+        <span class="tour-progress"><i id="tour-progress"></i></span>
+        <button type="button" id="tour-stop">Stop tour</button>
+      </div>
+
       <aside class="panel" id="panel-views">
         <h2>Views</h2>
+        <button class="tour-start" id="tour-start" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+          Take the tour
+        </button>
         <div class="tabs" id="view-tabs"></div>
         <ul class="view-list" id="view-list"></ul>
       </aside>
@@ -131,6 +152,12 @@
 
       <div class="hint" id="hint"></div>
       <div class="notice hidden" id="notice" role="alert"></div>
+      <!-- Once per visit, after a few minutes of exploring -->
+      <div class="cta-toast hidden" id="cta-toast" role="region" aria-label="Start a project">
+        <span>Want an experience like this for your project?</span>
+        <a id="cta-toast-link" href="./" target="_blank" rel="noopener">Get in touch &rarr;</a>
+        <button type="button" id="cta-toast-close" aria-label="Dismiss">&times;</button>
+      </div>
     </div>
 
     <section id="help" class="overlay hidden">

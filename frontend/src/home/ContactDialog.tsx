@@ -34,7 +34,7 @@ function fileProblem(files: File[]) {
 
 type SendState = { phase: 'editing' | 'sending' } | { phase: 'sent'; name: string } | { phase: 'error'; message: string };
 
-export function ContactDialog({ onClose }: { onClose: () => void }) {
+export function ContactDialog({ onClose, source }: { onClose: () => void; source?: string }) {
   const dialog = useRef<HTMLDivElement>(null);
   const firstField = useRef<HTMLInputElement>(null);
   // When the form was opened; the Worker rejects forms sent faster than a person could fill them in.
@@ -52,7 +52,7 @@ export function ContactDialog({ onClose }: { onClose: () => void }) {
     event.target.value = '';
   }
 
-  useEffect(() => track('contact_open'), []);
+  useEffect(() => track('contact_open', source ? { detail: `from the ${source} experience` } : {}), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
