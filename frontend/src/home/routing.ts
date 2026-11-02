@@ -2,16 +2,16 @@
 // (Cloudflare Pages, the local signalling server, Netcade's iframe). Each project also has a real page at /work/<slug>/
 // for search engines (scripts/prerender.mjs), which opens the app on that project:
 //   #/                 home
-//   #/experiences, #/work, #/about   home, scrolled to that section
+//   #/experiences, #/services, #/work, #/about   home, scrolled to that section
 //   #/work/<slug>      a portfolio project
 //   #/privacy          what the site records about visits
 import { useEffect, useMemo, useState } from 'react';
 
-export type Section = 'experiences' | 'work' | 'about';
+export type Section = 'experiences' | 'services' | 'work' | 'about';
 
 export type Route = { page: 'home'; section?: Section } | { page: 'project'; slug: string } | { page: 'privacy' };
 
-const sections: Section[] = ['experiences', 'work', 'about'];
+const sections: Section[] = ['experiences', 'services', 'work', 'about'];
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);

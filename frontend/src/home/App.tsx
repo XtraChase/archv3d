@@ -90,12 +90,17 @@ export function App() {
     url.searchParams.delete('contact');
     history.replaceState(null, '', url.href);
   }, [contactSource]);
-  const openContact = useCallback(() => setContactOpen(true), []);
+  // Services the form opens with already ticked (a service card's Get a quote).
+  const [contactServices, setContactServices] = useState<string[]>([]);
+  const openContact = useCallback((services?: string[]) => {
+    setContactServices(Array.isArray(services) ? services : []);
+    setContactOpen(true);
+  }, []);
   const closeContact = useCallback(() => setContactOpen(false), []);
 
   return (
     <>
-      <Header onContact={openContact} />
+      <Header onContact={() => openContact()} />
       <main>
         {route.page === 'project' ? (
           // Keyed by slug: each project starts fresh (players muted, lightbox closed) instead of reusing the last one.
@@ -107,7 +112,7 @@ export function App() {
         )}
       </main>
       <Footer />
-      {contactOpen && <ContactDialog onClose={closeContact} source={contactSource ?? undefined} />}
+      {contactOpen && <ContactDialog onClose={closeContact} source={contactSource ?? undefined} services={contactServices} />}
     </>
   );
 }
@@ -136,6 +141,7 @@ function Header({ onContact }: { onContact: () => void }) {
         </a>
         <nav className="site-nav" aria-label="Main">
           <a href={href.section('experiences')}>Experiences</a>
+          <a href={href.section('services')}>Services</a>
           <a href={href.section('work')}>Portfolio</a>
           <a href={href.section('about')}>About</a>
           <button className="nav-contact" onClick={onContact}>

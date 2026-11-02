@@ -34,7 +34,7 @@ function fileProblem(files: File[]) {
 
 type SendState = { phase: 'editing' | 'sending' } | { phase: 'sent'; name: string } | { phase: 'error'; message: string };
 
-export function ContactDialog({ onClose, source }: { onClose: () => void; source?: string }) {
+export function ContactDialog({ onClose, source, services = [] }: { onClose: () => void; source?: string; services?: string[] }) {
   const dialog = useRef<HTMLDivElement>(null);
   const firstField = useRef<HTMLInputElement>(null);
   // When the form was opened; the Worker rejects forms sent faster than a person could fill them in.
@@ -199,7 +199,7 @@ export function ContactDialog({ onClose, source }: { onClose: () => void; source
                     <div className="choices">
                       {SERVICES.map((name) => (
                         <label key={name} className="choice">
-                          <input type="checkbox" name="services" value={name} />
+                          <input type="checkbox" name="services" value={name} defaultChecked={services.includes(name)} />
                           <span>{name}</span>
                         </label>
                       ))}

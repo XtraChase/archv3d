@@ -7,15 +7,17 @@ import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
 import { HeroBuilding } from './HeroBuilding';
 import { DesignToReality } from './DesignToReality';
+import { Services } from './Services';
 
-export function HomePage({ availability, onContact }: { availability: Availability; onContact: () => void }) {
+export function HomePage({ availability, onContact }: { availability: Availability; onContact: (services?: string[]) => void }) {
   return (
     <>
       <Hero />
       <Experiences availability={availability} />
       <DesignToReality />
+      <Services onQuote={onContact} />
       <Portfolio />
-      <About onContact={onContact} />
+      <About onContact={() => onContact()} />
     </>
   );
 }
