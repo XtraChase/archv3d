@@ -314,6 +314,25 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   - TODO: delete OLD slabs (Site/Walkways, Site/HillPath folders, incl. the 52-step flight) once their regions are loaded;
     courtyard slabs -> MI_Concrete; re-run tree PCG (nudge pointBounds.z 500->501->500) so trees clear the new path; Save All;
     re-run Build Mesh Partition + repackage for the stream.
+- 2026-11-01 PARKING LOT (folder Site/Parking) on the user's "Parking Lot zone reference" footprint (x 6962..17987,
+  y -5768..5257; the reference cube is now hidden + NoCollision, bUseDefaultCollision=false, not deleted).
+  - Meshes /Game/MyStuff/Meshes/Site/SM_Site_Parking_{Asphalt,Concrete,Paint,Poles,PathLink}, actors Site_Parking_*,
+    origin (12474.5,-255.4); lot actors at z 3015 (raised 15 cm after terrain slivers poked through), PathLink at z 3000.
+    Asphalt = ResidentialHouses MI_Asphalt (UVs 1 unit/2 m), concrete = MI_Concrete, paint/poles = MI_ParkingPaint/Pole
+    (children of BasicShapeMaterial). Collision CTF_UseComplexAsSimple (paint none).
+  - Surface = smoothed upper envelope of traced terrain (2 m grid): ~20 cm above grade typ., edges up to ~1.2 m,
+    grade p50 4.7% / p95 10% (the hill has a 14% shelf at x~114). 12 rows x 34 stalls = 408, 7 m aisles, wheel stops,
+    20 twin-head poles (no light components), west 2.5 m sidewalk, east 7 m vehicle entrance + 8 m apron (no road yet).
+  - Hill path enters the west sidewalk at x~10480 via a 4 m ramp + curved 5.4 m PathLink from the path's visible end
+    (10520,-6652). The path's upper segment + 9 m overlook are now buried under the lot (harmless; mesh untouched).
+  - No vehicles (removed to keep VehicleVarietyPack out of the cook). Tree PCG re-run (pointBounds.z 501).
+  - Reference cube and the old SM_Site_ParkingLot_* meshes deleted; level saved (File > Save All via SlateInspector).
+  - Repackaged Main + AsBuilt_WP (4,694 pkgs, 88 s) and started the LOCAL experience (start_experience.bat; it switched
+    the AWS stream off). VERIFIED: Main loads in 2.5 s, streamer joined, http://127.0.0.1/ + https://stream.archv3d.com 200.
+    AWS cloud image NOT updated (user's choice) - it still has the pre-parking build.
+  - VehicleVarietyPack still cooks SK_Pickup + Pickup materials (~38 files) because of a pickup actor in AsBuilt_WP
+    (__ExternalActors__/Levels/AsBuilt_WP/0/G7/ACMBF...), not from the parking lot.
+  - Generator: session scratchpad gen2.py/gen_link.py (trace grid hfull.txt).
 - 2026-10-30 ULTRA DYNAMIC SKY + WEATHER. User replaced SunSky with Ultra_Dynamic_Sky + Ultra_Dynamic_Weather in /Game/Main.
   Controller: sky = UDS if present (property "Time of Day", 0-2400, set directly; UDS applies it each frame), else SunSky.
   Weather = actor with "Change Weather" custom event, called via reflection, params filled by type (preset object + transition
