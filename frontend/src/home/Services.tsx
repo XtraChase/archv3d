@@ -21,7 +21,7 @@ const SERVICES = [
   {
     title: 'BIM / Revit model',
     text: 'A full Revit model of a new design or an existing home, the one source the drawings, views and visuals come from.',
-    includes: ['New designs or as-built models', 'Drawings and views from the model', 'Native RVT, IFC or exported views'],
+    includes: ['New designs or as-built models', 'Drawings and views from the model', 'Native RVT files or exported views'],
     quote: ['BIM / Revit model'],
     icon: (
       <svg {...common}>
