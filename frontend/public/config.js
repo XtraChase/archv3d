@@ -33,7 +33,8 @@ window.ARCHVIZ_CONFIG = {
         { src: 'previews/studio/overview.webp', title: 'Overview' },
         { src: 'previews/studio/southwest.webp', title: 'Southwest' },
         { src: 'previews/studio/north.webp', title: 'North' },
-        { src: 'previews/studio/courtyard.webp', title: 'Courtyard' }
+        { src: 'previews/studio/courtyard.webp', title: 'Courtyard' },
+        { src: 'previews/studio/lobby.webp', title: 'Lobby' }
       ]
     },
     {
