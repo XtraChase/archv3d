@@ -137,7 +137,7 @@ function MediaView({ item, first, label, onOpen }: { item: Media; first: boolean
  * muted (browsers only autoplay silent video); clips with a sound track get a Sound on/off button, kept in step with
  * the player's own volume control.
  */
-function AutoVideo({ src, poster, ratio, label, audio }: { src: string; poster: string; ratio: string; label: string; audio?: boolean }) {
+export function AutoVideo({ src, poster, ratio, label, audio }: { src: string; poster: string; ratio: string; label: string; audio?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   useEffect(() => {

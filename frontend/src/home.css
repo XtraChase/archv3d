@@ -325,6 +325,9 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 /* ---- Portfolio -------------------------------------------------------------------------- */
 
 /* Rows of 2 / 3 / 2 / 1 on a 12-column grid, filled in publishing order. */
+.reel { margin: 0 0 56px; }
+.reel .media-video { width: 100%; border-radius: var(--radius); }
+.reel figcaption { margin-top: 12px; font-size: 14px; }
 .work-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);

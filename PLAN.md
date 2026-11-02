@@ -523,3 +523,12 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   - contact/ also saves each message to D1 (leads) for the Messages tab.
   - IAM policy for archv3d-control grows to StopInstances, CreateTags (archv3d-wake) and ce:GetCostAndUsage:
     aws/control-policy.json.
+- 2026-11-02 SITE ADDITIONS (from the "top ten" list; the stream-wake fallback is Chase's, done in Unreal):
+  - Project pages: `npm run build` writes /work/<slug>/ per project (scripts/prerender.mjs, app rendered at build time
+    from src/home/server.tsx and hydrated), with og.jpg previews, CreativeWork JSON-LD and a generated sitemap.
+    Gallery pictures and posters wider than 1100px have <name>-960.webp copies for phones.
+  - Quote form: project type, services, budget, timeline and up to 5 attachments (10 MB) for project inquiries; the
+    contact Worker emails them as attachments (multipart/mixed). JSON when there are no files, so either side can deploy
+    first. Tested with wrangler dev (.eml in contact/.wrangler/tmp/email).
+  - Home: "From drawing to built" (Madison Ridge elevation, Revit model, built photo) and a 45 s showreel at the top of
+    the portfolio (portfolio/reel/showreel-2026.mp4, cut from the three clips with sound).

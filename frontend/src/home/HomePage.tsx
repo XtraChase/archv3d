@@ -1,6 +1,7 @@
 import { levels, levelUrl, settings, type LevelConfig } from '../site';
 import { availabilityLabel, type Availability } from './availability';
-import { coverSrcSet, formatPublished, hasMotion, projectLabel, projects, type Project } from './projects';
+import { coverSrcSet, formatPublished, hasMotion, posterSrc, projectLabel, projects, type Project } from './projects';
+import { AutoVideo } from './ProjectPage';
 import { href } from './routing';
 import { profile } from './profile';
 import { ArrowIcon, PlayIcon } from './icons';
@@ -140,6 +141,18 @@ function Portfolio() {
           Architectural drafting, product design and real-time environments, newest first.
         </p>
       </div>
+      {/* Showreel cut from the project clips with sound (Springtime In The West, Mars Colony Outer Rim, Forever
+          Reaching Out). Publish a new cut under a new file name: /portfolio/ is cached for 7 days. */}
+      <figure className="reel">
+        <AutoVideo
+          src="portfolio/reel/showreel-2026.mp4"
+          poster={posterSrc('portfolio/reel/showreel-2026.webp', 1920)}
+          ratio="1920 / 816"
+          label="Showreel: Springtime In The West, Mars Colony Outer Rim and Forever Reaching Out"
+          audio
+        />
+        <figcaption className="muted">Showreel · real-time environments in Unreal Engine</figcaption>
+      </figure>
       <div className="work-grid">
         {projects.map((project, index) => (
           <WorkCard key={project.slug} project={project} index={index} />
