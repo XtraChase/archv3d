@@ -57,8 +57,7 @@ export function Services() {
         <p className="kicker">Services</p>
         <h2 className="section-title">From the first drawing to a tour you can walk</h2>
         <p className="section-lede muted">
-          Drafting, modeling and visualization for architects, developers and homeowners. Every project is priced on its
-          own: tell me about yours and I’ll send a quote.
+          Drafting, modeling and visualization for architects, developers and homeowners.
         </p>
       </div>
       <div className="service-grid">
