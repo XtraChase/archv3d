@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('archv3d', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (changes) => ipcRenderer.invoke('settings:save', changes),
   generateToken: () => ipcRenderer.invoke('settings:generateToken'),
+  phoneLink: () => ipcRenderer.invoke('settings:phoneLink'),
   testToken: () => ipcRenderer.invoke('settings:testToken'),
   openExternal: (url) => ipcRenderer.invoke('open:external', url),
   onStatus: subscribe('status'),

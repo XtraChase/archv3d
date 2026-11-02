@@ -1,6 +1,6 @@
 // Leads: messages sent through the site's contact form, with the network and place they came from.
 import { useState } from 'react';
-import { api, errorText, type Lead } from './api';
+import { api, errorText, isPhone, type Lead } from './api';
 import { dateTime, place } from './format';
 
 interface Props {
@@ -28,7 +28,7 @@ export function Leads({ leads, error, onDeleted }: Props) {
     return (
       <div className="empty">
         <p>No messages in this period yet.</p>
-        <p className="note">Messages from the site's contact form show up here, and as a Windows notification when they arrive.</p>
+        <p className="note">Messages from the site's contact form show up here{isPhone ? '' : ', and as a Windows notification when they arrive'}.</p>
       </div>
     );
 

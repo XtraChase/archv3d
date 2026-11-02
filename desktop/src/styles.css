@@ -302,3 +302,37 @@ details { margin-top: 14px; }
 summary { cursor: pointer; color: var(--muted); }
 .token-facts { max-width: 520px; margin-bottom: 4px; }
 .token-facts dd { text-align: left; }
+
+/* Phone app (src/webApi.ts): bottom tab bar, bigger touch targets, nothing wider than the screen. */
+.qr-box { width: min(280px, 100%); margin-top: 12px; border-radius: 8px; overflow: hidden; }
+.qr { display: block; width: 100%; height: auto; }
+
+.app-phone { height: 100vh; height: 100dvh; font-size: 15px; }
+.app-phone .topbar {
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+}
+.app-phone .status-pill { max-width: 66vw; }
+.app-phone .icon-button { width: 36px; height: 36px; }
+.app-phone .content { padding: 16px; gap: 14px; }
+.app-phone .banner { padding: 10px 16px; }
+.app-phone .tabs-bottom {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.app-phone .tabs-bottom button { justify-content: center; min-height: 48px; padding: 8px 4px; border-radius: 12px; }
+.app-phone .button { padding: 12px 20px; }
+.app-phone .input { padding: 11px 12px; font-size: 16px; }
+.app-phone .field-row { flex-wrap: wrap; }
+.app-phone .toolbar { flex-wrap: wrap; gap: 10px; }
+.app-phone .toolbar .small { margin-left: 0; }
+.app-phone .segmented button { padding: 8px 14px; }
+.app-phone .panel { padding: 16px; }
+.app-phone .card h3 { font-size: 26px; }
+.app-phone .settings { max-width: none !important; }

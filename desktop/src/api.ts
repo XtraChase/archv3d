@@ -1,4 +1,6 @@
 // What electron/preload.cjs exposes as window.archv3d, and the shapes the main process and the control Worker return.
+// Without Electron (the phone app) src/webApi.ts provides the same API.
+import { createWebApi } from './webApi';
 
 export type OverallKey = 'available' | 'busy' | 'starting' | 'asleep' | 'off' | 'unknown';
 export type CloudState = 'off' | 'asleep' | 'starting' | 'running' | 'error';
@@ -128,6 +130,8 @@ export interface Api {
   getSettings(): Promise<Settings>;
   saveSettings(changes: Partial<Settings> & { adminToken?: string }): Promise<Settings>;
   generateToken(): Promise<string>;
+  /** Desktop only: the phone app's address with the admin token after the #, for the QR code in Settings. */
+  phoneLink(): Promise<string>;
   testToken(): Promise<{ ok: boolean; error?: string }>;
   openExternal(url: string): Promise<void>;
   onStatus(callback: (status: Status) => void): () => void;
@@ -141,6 +145,9 @@ declare global {
   }
 }
 
+/** Running as the installed phone app: no PC controls, no tray, no notifications. */
+export const isPhone = !window.archv3d;
+if (isPhone) window.archv3d = createWebApi();
 export const api = window.archv3d;
 
 /** Electron wraps errors thrown in the main process: "Error invoking remote method 'x': Error: message". */

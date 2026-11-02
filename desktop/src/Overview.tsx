@@ -1,6 +1,6 @@
 // Overview: the website, the live experience, the cloud machine, the stream on this PC and this month's AWS costs.
 import { useEffect, useState } from 'react';
-import { api, errorText, type ActionName, type Costs, type Status } from './api';
+import { api, errorText, isPhone, type ActionName, type Costs, type Status } from './api';
 import { ago, duration, money } from './format';
 
 interface Props {
@@ -127,28 +127,30 @@ export function Overview({ status, running, hasToken, onAction, onSettings }: Pr
         </div>
       </section>
 
-      <section className="panel card">
-        <p className="kicker">This PC</p>
-        <h3>{local.running ? (stream.reachable && status.servedBy === 'local' ? 'Streaming' : 'Running') : 'Stopped'}</h3>
-        <dl className="facts">
-          <dt>Experience</dt>
-          <dd>{local.game ? 'Running' : 'Not running'}</dd>
-          <dt>Cloudflare tunnel</dt>
-          <dd>{local.tunnel ? 'Connected' : 'Not running'}</dd>
-        </dl>
-        <p className="note">Starting here turns the cloud machine off; the two share the same address.</p>
-        <div className="actions">
-          {local.running ? (
-            <button className="button" disabled={busy} onClick={() => onAction('localStop')}>
-              {running === 'localStop' ? 'Stopping…' : 'Stop'}
-            </button>
-          ) : (
-            <button className="button button-primary" disabled={busy} onClick={() => onAction('localStart')}>
-              {running === 'localStart' ? 'Starting…' : 'Start'}
-            </button>
-          )}
-        </div>
-      </section>
+      {!isPhone && (
+        <section className="panel card">
+          <p className="kicker">This PC</p>
+          <h3>{local.running ? (stream.reachable && status.servedBy === 'local' ? 'Streaming' : 'Running') : 'Stopped'}</h3>
+          <dl className="facts">
+            <dt>Experience</dt>
+            <dd>{local.game ? 'Running' : 'Not running'}</dd>
+            <dt>Cloudflare tunnel</dt>
+            <dd>{local.tunnel ? 'Connected' : 'Not running'}</dd>
+          </dl>
+          <p className="note">Starting here turns the cloud machine off; the two share the same address.</p>
+          <div className="actions">
+            {local.running ? (
+              <button className="button" disabled={busy} onClick={() => onAction('localStop')}>
+                {running === 'localStop' ? 'Stopping…' : 'Stop'}
+              </button>
+            ) : (
+              <button className="button button-primary" disabled={busy} onClick={() => onAction('localStart')}>
+                {running === 'localStart' ? 'Starting…' : 'Start'}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="panel card card-wide">
         <header className="panel-head">

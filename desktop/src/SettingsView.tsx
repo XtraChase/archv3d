@@ -1,8 +1,66 @@
 // Settings: the admin token shared with the control Worker, where the project lives, notifications, start with Windows.
+// On the phone only the token and the addresses apply; the desktop app also shows the QR code that sets up the phone.
 import { useEffect, useState } from 'react';
-import { api, errorText, type Settings } from './api';
+import { api, errorText, isPhone, type Settings } from './api';
+import { QrCode } from './QrCode';
 
 type Check = { state: 'checking' } | { state: 'ok' } | { state: 'error'; text: string };
+
+const WHERE = isPhone ? 'phone' : 'PC';
+
+/** The QR code that sets up the phone app: its address with the admin token after the #. Shown on request, then hidden. */
+function PhoneSetup({ address }: { address: string }) {
+  const [link, setLink] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!link) return;
+    const timer = setTimeout(() => setLink(''), 120000);
+    return () => clearTimeout(timer);
+  }, [link]);
+
+  async function show() {
+    try {
+      setLink(await api.phoneLink());
+      setError('');
+    } catch (failure) {
+      setError(errorText(failure));
+    }
+  }
+
+  return (
+    <section className="panel">
+      <h3 className="panel-title">Phone</h3>
+      <p className="note">
+        Control the cloud stream and see visitors from your phone. Scan the code with the phone's camera: it opens the app at{' '}
+        <strong>{address.replace(/^https?:\/\//, '').replace(/\/$/, '')}</strong> already signed in. Then in Chrome choose ⋮ › <strong>Add to Home screen</strong> ›{' '}
+        <strong>Install</strong>.
+      </p>
+      {error && <p className="banner banner-error">{error}</p>}
+      {link ? (
+        <>
+          <div className="qr-box">
+            <QrCode text={link} label="QR code that opens the phone app signed in" />
+          </div>
+          <p className="note">
+            The code contains your admin token: only scan it with your own phone. It hides itself after two minutes.
+          </p>
+          <div className="actions">
+            <button className="button" onClick={() => setLink('')}>
+              Hide the code
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="actions">
+          <button className="button" onClick={show}>
+            Show the QR code
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => void }) {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -56,7 +114,7 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
   }
 
   async function savePasted() {
-    if (await save({ adminToken: token }, 'Admin token saved on this PC.')) {
+    if (await save({ adminToken: token }, `Admin token saved on this ${WHERE}.`)) {
       setToken('');
       setReplacing(false);
       checkToken();
@@ -86,13 +144,13 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
         <h3 className="panel-title">Admin token</h3>
         <p className="note">
           The app and the control Worker share a secret token. It unlocks visitor insights, messages, costs and turning the cloud machine on and
-          off. It's stored encrypted for your Windows account and never shown again after it's saved.
+          off. {isPhone ? "It's kept in this browser on your phone and never shown again after it's saved." : "It's stored encrypted for your Windows account and never shown again after it's saved."}
         </p>
 
         {!editing && (
           <>
             <dl className="facts token-facts">
-              <dt>On this PC</dt>
+              <dt>On this {WHERE}</dt>
               <dd className="good">Saved</dd>
               <dt>Cloudflare</dt>
               <dd className={check?.state === 'ok' ? 'good' : check?.state === 'error' ? 'bad' : ''}>
@@ -111,7 +169,7 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
                   <button
                     className="button button-danger"
                     onClick={async () => {
-                      await save({ adminToken: '' }, 'Admin token removed from this PC.');
+                      await save({ adminToken: '' }, `Admin token removed from this ${WHERE}.`);
                       setConfirmRemove(false);
                       setCheck(null);
                     }}
@@ -124,7 +182,7 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
                 </>
               ) : (
                 <button className="link-button" onClick={() => setConfirmRemove(true)}>
-                  Remove from this PC
+                  Remove from this {WHERE}
                 </button>
               )}
             </div>
@@ -162,12 +220,19 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
                 again or generate a new one.
               </p>
             )}
-            <p>
-              <button className="button" onClick={generate}>
-                Generate a new token
-              </button>{' '}
-              <span className="muted">or paste the one already in Cloudflare:</span>
-            </p>
+            {isPhone ? (
+              <p className="muted">
+                Easiest: in the desktop app open Settings › Phone and scan the QR code with this phone's camera. Or paste the token from
+                Cloudflare:
+              </p>
+            ) : (
+              <p>
+                <button className="button" onClick={generate}>
+                  Generate a new token
+                </button>{' '}
+                <span className="muted">or paste the one already in Cloudflare:</span>
+              </p>
+            )}
             <div className="field-row">
               <input
                 className="input mono"
@@ -197,29 +262,35 @@ export function SettingsView({ onSaved }: { onSaved: (settings: Settings) => voi
         )}
       </section>
 
+      {!isPhone && settings.hasAdminToken && !editing && <PhoneSetup address={settings.controlUrl} />}
+
       <section className="panel">
         <h3 className="panel-title">This app</h3>
-        <label className="check">
-          <input type="checkbox" checked={settings.startWithWindows} onChange={(event) => set('startWithWindows', event.target.checked)} />
-          Start with Windows, in the tray
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={settings.notifyLeads} onChange={(event) => set('notifyLeads', event.target.checked)} />
-          Notify me about new contact messages
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={settings.notifyOrganizations}
-            onChange={(event) => set('notifyOrganizations', event.target.checked)}
-          />
-          Notify me when a new organization visits
-        </label>
+        {!isPhone && (
+          <>
+            <label className="check">
+              <input type="checkbox" checked={settings.startWithWindows} onChange={(event) => set('startWithWindows', event.target.checked)} />
+              Start with Windows, in the tray
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={settings.notifyLeads} onChange={(event) => set('notifyLeads', event.target.checked)} />
+              Notify me about new contact messages
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={settings.notifyOrganizations}
+                onChange={(event) => set('notifyOrganizations', event.target.checked)}
+              />
+              Notify me when a new organization visits
+            </label>
 
-        <label className="field">
-          <span>Project folder (holds start_experience.bat and stop_experience.bat)</span>
-          <input className="input" value={settings.projectDir} onChange={(event) => set('projectDir', event.target.value)} />
-        </label>
+            <label className="field">
+              <span>Project folder (holds start_experience.bat and stop_experience.bat)</span>
+              <input className="input" value={settings.projectDir} onChange={(event) => set('projectDir', event.target.value)} />
+            </label>
+          </>
+        )}
         <details>
           <summary>Addresses</summary>
           <label className="field">

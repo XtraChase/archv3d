@@ -1,0 +1,11 @@
+[
+  "comcast", "charter", "spectrum", "verizon", "at&t", "\\batt\\b", "t-mobile", "tmobile", "sprint", "cox ", "centurylink",
+  "lumen", "frontier", "windstream", "mediacom", "altice", "optimum", "suddenlink", "cable one", "sparklight", "wow!",
+  "starlink", "spacex", "space exploration", "viasat", "hughes", "google", "amazon", "microsoft", "cloudflare", "digitalocean",
+  "linode", "akamai", "ovh", "hetzner", "oracle", "apple", "facebook", "meta platforms", "vodafone", "british tele",
+  "deutsche telekom", "orange", "telefonica", "bell canada", "rogers", "shaw", "telus", "videotron", "ziply", "consolidated",
+  "brightspeed", "astound", "metronet", "cricket", "us cellular", "dish", "blackfoot", "vision net", "3 rivers", "mid-rivers",
+  "nemont", "triangle", "zscaler", "private relay", "proton", "nordvpn", "mullvad", "m247", "datacamp", "telephone",
+  "wireless", "cellular", "mobile", "broadband", "internet", "cable", "telecom", "fiber", "communications", "hosting",
+  "data center", "datacenter", "isp"
+]

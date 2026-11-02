@@ -1,6 +1,6 @@
 // archv3d Control: tabs for the stream (Overview), Visitors, Messages and Settings, over the main process's API.
 import { useCallback, useEffect, useState } from 'react';
-import { api, errorText, type ActionEvent, type ActionName, type Insights, type Settings, type Status } from './api';
+import { api, errorText, isPhone, type ActionEvent, type ActionName, type Insights, type Settings, type Status } from './api';
 import { ago } from './format';
 import { Leads } from './Leads';
 import { Overview } from './Overview';
@@ -84,21 +84,25 @@ export function App() {
   const key = status?.overall.key ?? 'unknown';
   const newLeads = insights?.leads.length ?? 0;
 
+  const nav = (
+    <nav className={isPhone ? 'tabs tabs-bottom' : 'tabs'} role="tablist">
+      {TABS.map((item) => (
+        <button key={item.id} role="tab" aria-selected={tab === item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>
+          {item.label}
+          {item.id === 'leads' && newLeads > 0 && <span className="count">{newLeads}</span>}
+        </button>
+      ))}
+    </nav>
+  );
+
   return (
-    <div className="app">
+    <div className={isPhone ? 'app app-phone' : 'app'}>
       <header className="topbar">
         <div className="brand">
           <span className="brand-name">archv3d</span>
           <span className="brand-sub">Control</span>
         </div>
-        <nav className="tabs" role="tablist">
-          {TABS.map((item) => (
-            <button key={item.id} role="tab" aria-selected={tab === item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>
-              {item.label}
-              {item.id === 'leads' && newLeads > 0 && <span className="count">{newLeads}</span>}
-            </button>
-          ))}
-        </nav>
+        {!isPhone && nav}
         <div className="status-pill" title={status ? `Checked ${ago(status.checkedAt)}` : ''}>
           <span className={`dot dot-${key}`} aria-hidden="true" />
           <span>{status?.overall.label ?? 'Checking…'}</span>
@@ -148,6 +152,8 @@ export function App() {
         )}
         {tab === 'settings' && <SettingsView onSaved={setSettings} />}
       </main>
+
+      {isPhone && nav}
     </div>
   );
 }

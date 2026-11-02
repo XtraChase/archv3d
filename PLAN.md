@@ -546,3 +546,12 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   `-d3d12 -ini:Game:[/Script/PixelStreaming2Settings.PixelStreaming2PluginSettings]:Codec=VP8`. Bucket build uploaded after the Vulkan cook.
   TODO: a 30+ min soak with several visitors cycling; the Interior/Lobby furniture and Interior/Lounge folders were missing from Main
   when this build was cooked (57 actors deleted in the editor mid-cook).
+- 2026-11-02 – archv3d Control on the phone (Galaxy S24 Ultra).
+  - A PWA, not a native app: desktop/ builds a second bundle (`npm run build:phone`, vite.web.config.ts) from the same React
+    screens; src/webApi.ts stands in for the Electron preload API and calls the control Worker directly. Output is committed in
+    control/public/ and served by the Worker itself (`assets` + `run_worker_first` for /admin/*, /status, /wake, /e), so it is
+    same-origin and needs no CORS. Installed from Chrome (Add to Home screen > Install); manifest, icons, no service worker.
+  - Setup: desktop Settings > Phone shows a QR code of `<control url>/#setup=<admin token>`; the page saves the token to
+    localStorage and clears the hash. Unavailable on the phone: the stream on this PC, tray, notifications (no push service).
+  - The provider list used to classify visitor networks moved to desktop/shared/providers.json (desktop and phone share it).
+  - Fixed in both apps: a 503 "AWS key not configured" was reported as a missing ADMIN_TOKEN.

@@ -78,6 +78,14 @@ async function testToken() {
   }
 }
 
+/** The phone app's address with the token after the #, which a browser never sends to a server. Shown as a QR code. */
+function phoneLink() {
+  const token = adminToken();
+  if (!token) throw new Error('No admin token is saved on this PC yet.');
+  const base = readConfig().controlUrl;
+  return `${base.endsWith('/') ? base : `${base}/`}#setup=${encodeURIComponent(token)}`;
+}
+
 function generateToken() {
   return require('node:crypto').randomBytes(32).toString('hex');
 }
@@ -107,7 +115,10 @@ async function controlFetch(route, { method = 'GET', body, admin = true } = {}) 
   });
   const data = await response.json().catch(() => ({}));
   if (response.status === 401) throw new Error("The admin token on this PC doesn't match ADMIN_TOKEN in Cloudflare (Settings).");
-  if (response.status === 503 && admin) throw new Error('ADMIN_TOKEN isn\'t set on the control Worker in Cloudflare yet (Settings).');
+  // Other 503s (AWS key or database not configured) carry their own message.
+  if (response.status === 503 && admin && /^admin not configured/.test(data.error ?? '')) {
+    throw new Error('ADMIN_TOKEN isn\'t set on the control Worker in Cloudflare yet (Settings).');
+  }
   if (!response.ok) throw new Error(data.error || `${route}: HTTP ${response.status}`);
   return data;
 }
@@ -246,21 +257,9 @@ async function localStop() {
 // ---- Insights ----------------------------------------------------------------------------------------
 
 // Networks that are internet providers, mobile carriers or clouds rather than a visitor's own organization. A visit
-// from anything else is often a company, school or agency network: a likely business lead.
-const PROVIDER = new RegExp(
-  [
-    'comcast', 'charter', 'spectrum', 'verizon', 'at&t', '\\batt\\b', 't-mobile', 'tmobile', 'sprint', 'cox ', 'centurylink',
-    'lumen', 'frontier', 'windstream', 'mediacom', 'altice', 'optimum', 'suddenlink', 'cable one', 'sparklight', 'wow!',
-    'starlink', 'spacex', 'space exploration', 'viasat', 'hughes', 'google', 'amazon', 'microsoft', 'cloudflare', 'digitalocean',
-    'linode', 'akamai', 'ovh', 'hetzner', 'oracle', 'apple', 'facebook', 'meta platforms', 'vodafone', 'british tele',
-    'deutsche telekom', 'orange', 'telefonica', 'bell canada', 'rogers', 'shaw', 'telus', 'videotron', 'ziply',
-    'consolidated', 'brightspeed', 'astound', 'metronet', 'cricket', 'us cellular', 'dish', 'blackfoot', 'vision net',
-    '3 rivers', 'mid-rivers', 'nemont', 'triangle', 'zscaler', 'private relay', 'proton', 'nordvpn', 'mullvad', 'm247',
-    'datacamp', 'telephone', 'wireless', 'cellular', 'mobile', 'broadband', 'internet', 'cable', 'telecom', 'fiber',
-    'communications', 'hosting', 'data center', 'datacenter', 'isp'
-  ].join('|'),
-  'i'
-);
+// from anything else is often a company, school or agency network: a likely business lead. The list is shared with
+// the phone app (src/webApi.ts).
+const PROVIDER = new RegExp(require('../shared/providers.json').join('|'), 'i');
 
 const orgKind = (org) => (!org ? 'unknown' : PROVIDER.test(org) ? 'provider' : 'organization');
 
@@ -277,6 +276,7 @@ module.exports = {
   publicSettings,
   saveSettings,
   generateToken,
+  phoneLink,
   testToken,
   rememberSeen,
   getStatus,

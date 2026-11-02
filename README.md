@@ -33,6 +33,13 @@ whichever level the current visitor picked.
   projects, recent visits) and contact messages, with Windows notifications for new messages and new organization
   visitors. Closing the window keeps it in the system tray (the icon's color is the stream status; right-click for the
   actions and Quit). Build the installer with `npm install && npm run dist` (output in `desktop/release/`).
+  The same screens also run as a phone app (below). Settings > Phone shows a QR code that signs the phone in.
+  **Phone app** (Android/Chrome, installable from the browser as "archv3d Control"): `npm run build:phone` builds the
+  renderer with `src/webApi.ts` in place of Electron's main process into `control/public/`, which the control Worker
+  serves at its root (`https://archv3d-control.<account>.workers.dev/`, `assets` in `control/wrangler.jsonc`); commit the
+  result. It has the cloud on/off, visitors, costs and messages, but not the stream on this PC and no background
+  notifications. The admin token is kept in the phone browser's storage, set up from the QR code (the link carries it
+  after the `#`, which is never sent to a server). To remove a lost phone, rotate `ADMIN_TOKEN` in Cloudflare.
 - `aws/` – the AWS EC2 g5.xlarge (NVIDIA A10G, Cloud Gaming driver, Windows Server 2022, us-west-2) that runs the stream
   instead of this PC: `config.ps1` (names), `create-instance.ps1` (one time: bucket, instance role, security group,
   instance), `userdata.txt` + `vm-startup.ps1` (every boot: installs, driver, page file, logs from before the boot,

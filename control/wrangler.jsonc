@@ -14,6 +14,12 @@
     "AWS_REGION": "us-west-2",
     "INSTANCE_NAME": "archv3d-stream"
   },
+  // The phone app (desktop/, `npm run build:phone`, committed here): static files at the Worker's root. Only the API
+  // paths run the Worker code.
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/admin/*", "/status", "/wake", "/e"]
+  },
   // Visits, contact messages and a small cache (control/src/insights.ts creates the tables).
   "d1_databases": [
     { "binding": "DB", "database_name": "archv3d-insights", "database_id": "d051c863-02a0-461b-941d-5753d45571de" }
