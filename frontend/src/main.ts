@@ -590,7 +590,7 @@ function applyCatalog(catalog: CatalogMessage) {
     history.replaceState(null, '', levelUrl(level.id));
   }
   hideLoading();
-  renderLevels();
+  // renderLevels(); // project switching inside an experience is disabled
 
   cameras = catalog.cameras;
   applySharedView();
@@ -1247,5 +1247,5 @@ function applyBranding() {
   document.title = `${currentLevel.title} · ${settings.title ?? 'Interactive'}`;
 }
 applyBranding();
-renderLevels();
+// renderLevels(); // project switching inside an experience is disabled
 initPreview();

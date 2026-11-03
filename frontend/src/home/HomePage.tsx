@@ -114,7 +114,7 @@ function ExperienceCard({ level, index, availability }: { level: LevelConfig; in
   // status badge inside still announces changes on its own.
   const label = `${level.title}: ${ACTION_TEXT[availability.status] ?? 'Enter experience'}`;
   return (
-    <a className="experience-card" href={levelUrl(level.id, { wake: waking })} aria-label={label}>
+    <a className="experience-card" href={levelUrl(level.id, { wake: waking })} aria-label={label} target="_blank" rel="noopener">
       {content}
     </a>
   );
