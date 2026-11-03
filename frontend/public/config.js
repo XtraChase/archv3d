@@ -16,6 +16,9 @@ window.ARCHVIZ_CONFIG = {
   // Largest stream the browser may request, as 'WIDTHxHEIGHT' (swapped for portrait screens).
   // Bigger windows are streamed at this size and upscaled. Override with ?maxres=1280x720.
   maxStreamResolution: '1920x1080',
+  // true: never resize the render to the window (no r.SetRes); the game streams at its launch size, 1920x1080.
+  // Added 2026-11-03 to stop cloud hangs after a viewer connects. ?match=1 turns it off for one visit.
+  pinStreamResolution: true,
   // Landing page heading.
   title: 'archv3d',
   subtitle: 'Interactive architecture, streamed live from Unreal Engine',

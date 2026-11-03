@@ -76,6 +76,8 @@ const [maxLongSide, maxShortSide] = (urlParams.get('maxres') ?? settings.maxStre
   .map(Number)
   .sort((a, b) => b - a);
 
+const pinStreamResolution = urlParams.has('match') ? urlParams.get('match') === '0' : settings.pinStreamResolution ?? false;
+
 function streamScaleFor(width: number, height: number) {
   const scale = Math.min(1, maxLongSide / Math.max(width, height), maxShortSide / Math.min(width, height));
   return Number.isFinite(scale) ? Math.max(0.1, scale) : 1;
@@ -116,7 +118,9 @@ const config = new Config({
     StartVideoMuted: true,
     HoveringMouse: true,
     FakeMouseWithTouches: true,
-    MatchViewportRes: true,
+    // Pinned: the game keeps its launch size (1920x1080) and the browser sends no r.SetRes, which on the cloud
+    // was followed by hangs. ?match=1 or pinStreamResolution:false in config.js restores matching the window.
+    MatchViewportRes: !pinStreamResolution,
     WaitForStreamer: true,
     // Each session needs a fresh ticket from the queue, so the library must not reconnect on its own.
     MaxReconnectAttempts: 0,
@@ -195,7 +199,9 @@ const BUSY_TEXT = 'Someone else is exploring right now. Please try again in a fe
 const ENDED_TEXT: Record<string, string> = {
   time: 'Your time is up, others were waiting. Thanks for exploring!',
   idle: 'Your session ended because there was no activity for a while.',
-  claim: 'You missed your turn. Join the line again to explore.'
+  claim: 'You missed your turn. Join the line again to explore.',
+  absent: 'The connection to the experience was lost. Join again to continue.',
+  replaced: 'The experience was opened again in another tab, so this one stopped.'
 };
 
 interface QueueMessage {
@@ -273,6 +279,21 @@ function wake() {
   });
 }
 
+// Identifies this browser to the gateway across reloads and tabs, so opening the experience again (new tab, reload) replaces
+// the browser's own earlier session instead of queueing behind it.
+const clientId = (() => {
+  try {
+    let id = localStorage.getItem('archv3d-client');
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('archv3d-client', id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+})();
+
 function sendGateway(message: Record<string, unknown>) {
   if (queueSocket?.readyState === WebSocket.OPEN) queueSocket.send(JSON.stringify(message));
 }
@@ -331,7 +352,7 @@ function onGatewayMessage(message: GatewayMessage) {
       autoJoin = false;
       failureText = '';
       inLine = true;
-      sendGateway({ type: 'join' });
+      sendGateway({ type: 'join', client: clientId, level: currentLevel.id });
     }
     const pill = $('#queue-pill');
     pill.textContent = `${message.waiting} waiting`;
@@ -345,8 +366,10 @@ function onGatewayMessage(message: GatewayMessage) {
     showNotice(message);
   } else if (message.type === 'ended') {
     inSession = false;
-    if (message.reason === 'restart') {
-      // The game went away; the gateway put this visitor back at the front of the line.
+    if (message.reason === 'restart' || message.reason === 'switch') {
+      // The game went away, or is being restarted into another level; the gateway put this visitor back at the front
+      // of the line.
+      hideLoading();
       inLine = true;
       failureText = '';
     } else {
@@ -526,7 +549,7 @@ $('#start').addEventListener('click', () => {
   } else if (queueSocket?.readyState === WebSocket.OPEN) {
     failureText = '';
     inLine = true;
-    sendGateway({ type: 'join' });
+    sendGateway({ type: 'join', client: clientId, level: currentLevel.id });
   } else if (cloud === 'asleep') {
     // A fresh try from the visitor: a new round of attempts.
     wakeAttempts = 0;
@@ -902,7 +925,11 @@ function renderLevels() {
         if (level === currentLevel) return;
         openPanel('');
         showLoading(level.id);
-        send({ cmd: 'level', value: level.id });
+        // The gateway restarts the game directly into the other level (switching levels inside a streaming game hung it),
+        // so the stream drops and this page reconnects by itself, keeping its place at the front of the line.
+        currentLevel = level;
+        history.replaceState(null, '', levelUrl(level.id));
+        sendGateway({ type: 'level', level: level.id });
       });
       item.append(button);
       return item;

@@ -7,7 +7,10 @@ $Web = 'C:\archv3d\ArchVizWeb'
 # the Vulkan path (NVENC through CUDA) did not: a 10+ minute session ran at 30 fps with no restarts (2026-11-02).
 # Needs the build cooked with SF_VULKAN_SM6 (DefaultEngine.ini). To fall back to software VP8 (25 fps, no leak), set the
 # instance tag archv3d-game-args to: -d3d12 -ini:Game:[/Script/PixelStreaming2Settings.PixelStreaming2PluginSettings]:Codec=VP8
-$gameArgs = @('-vulkan')
+#
+# 2026-11-03: hardware ray tracing is off on the cloud (software Lumen) while chasing deadlocks seconds after a viewer
+# connects (PixelCaptureMediaCapture::WaitForGPU fence timeouts). Remove the two -ini args to get HWRT back.
+$gameArgs = @('-vulkan', '-ini:Engine:[SystemSettings]:r.RayTracing=0,r.Lumen.HardwareRayTracing=0')
 
 # Experiments: extra game arguments from the instance tag archv3d-game-args, read through the instance metadata, so a
 # different launch needs only a tag change and a restart, not a re-upload.

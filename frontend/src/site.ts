@@ -17,6 +17,7 @@ export interface LevelConfig {
 export interface SiteConfig {
   signallingUrl?: string;
   maxStreamResolution?: string;
+  pinStreamResolution?: boolean;
   title?: string;
   subtitle?: string;
   levels?: LevelConfig[];
