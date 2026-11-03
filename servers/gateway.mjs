@@ -11,7 +11,7 @@ import http from 'node:http';
 import net from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
-import { appendFile } from 'node:fs';
+import { appendFile, existsSync, rmSync, statSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
@@ -46,6 +46,10 @@ const IMDS_SETTINGS = process.argv.includes('--imds_settings');
 // Game watchdog (only with --game).
 const GAME = arg('game', '');
 const STREAMER_PORT = Number(arg('streamer_port', 8888));
+// The game touches Saved/heartbeat.txt every couple of seconds while its game thread runs. A hung game still looks
+// connected to the signalling server, so a heartbeat that stops for this long gets the game killed and restarted.
+const HEARTBEAT_FILE = GAME ? join(dirname(GAME), 'Movie_Studio', 'Saved', 'heartbeat.txt') : '';
+const HEARTBEAT_STALE_SECONDS = 45;
 const WINDOWED = process.argv.includes('--windowed');
 // A running game that hasn't been registered as a streamer for this long is treated as hung and restarted.
 const HANG_SECONDS = 180;
@@ -57,6 +61,26 @@ const PAUSE_MINUTES = 10;
 // --game_args "<args>": extra command-line arguments for the game (cloud VM experiments, set through instance
 // metadata by cloud\stream-session.ps1, e.g. "-nosound").
 const GAME_ARGS = arg('game_args', '').split(/\s+/).filter(Boolean);
+// Boot warm-up (game argument -ArchVizWarmup): the game switches the lights on and visits every camera point before
+// anyone watches, then writes Saved/warmup.done. Until then the game doesn't count as online, so no visitor gets a turn
+// (on the cloud the first lights-on with a viewer connected deadlocked the game). If the file never appears (an older
+// build, a stuck warm-up) the game is let through after WARMUP_TIMEOUT_SECONDS.
+const WARMUP_ENABLED = GAME_ARGS.includes('-ArchVizWarmup');
+const WARMUP_FILE = GAME ? join(dirname(GAME), 'Movie_Studio', 'Saved', 'warmup.done') : '';
+const WARMUP_TIMEOUT_SECONDS = 120;
+// When the game was last launched (or the gateway started and may have adopted a running game).
+let gameLaunchedAt = Date.now();
+let warmupLogged = false;
+function warmedUp() {
+  if (!WARMUP_ENABLED || !WARMUP_FILE) return true;
+  const done = existsSync(WARMUP_FILE);
+  const timedOut = Date.now() - gameLaunchedAt > WARMUP_TIMEOUT_SECONDS * 1000;
+  if ((done || timedOut) && !warmupLogged) {
+    warmupLogged = true;
+    log(done ? 'game warm-up finished' : `game warm-up not finished after ${WARMUP_TIMEOUT_SECONDS} s, letting visitors in anyway`);
+  }
+  return done || timedOut;
+}
 // --log_file (cloud VM): also append to a file, which the cloud scripts upload for debugging.
 const LOG_FILE = arg('log_file', '');
 const log = (...parts) => {
@@ -75,21 +99,25 @@ const line = [];
 let session = null;
 // Whether the game is registered with the signalling server.
 let online = false;
+// The level the game was launched into ('studio' | 'house'). Switching level inside a running game while it streams
+// hung it (the video capture is torn down mid-flight), so a visitor who wants the other level gets the game restarted
+// directly into it instead, before their turn starts.
+const LEVEL_MAPS = { studio: '/Game/Main', house: '/Game/Levels/AsBuilt_WP' };
+let gameLevel = 'studio';
+// Set while the game is being restarted into another level: no turns are given out until it is back.
+let switching = false;
+let pendingLevel = '';
 
 function send(ws, message) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
 }
 
 /**
- * Upper bound, in seconds, on the wait for the visitor at 1-based `position`: the current session's remaining time,
- * then one full session for everyone ahead. Sessions often end earlier (idle, closed tabs), so it is shown as "up to".
+ * Sessions have no time cap (a joiner never ends the current session), so there is no honest upper bound on the wait:
+ * 0 hides the estimate on the page.
  */
-function waitUpperBound(position) {
-  if (!session || position < 1) return 0;
-  const now = Date.now();
-  const endsAt = session.deadline || (session.startedAt || now) + SESSION_SECONDS * 1000;
-  const first = Math.max(WARNING_SECONDS, (endsAt - now) / 1000);
-  return Math.round(first + (position - 1) * SESSION_SECONDS);
+function waitUpperBound() {
+  return 0;
 }
 
 function broadcast() {
@@ -109,8 +137,27 @@ function broadcast() {
 }
 
 /** Calls the next visitor in line if the stream is free. */
+function needsLevelChange(ws) {
+  return !!GAME && !!ws.level && !!LEVEL_MAPS[ws.level] && ws.level !== gameLevel;
+}
+
+/** Restarts the game into `level`; the watchdog relaunches it (launchGame uses pendingLevel). */
+function switchGameTo(level) {
+  if (switching) return;
+  log(`restarting the game into the ${level} level (it was in ${gameLevel})`);
+  switching = true;
+  pendingLevel = level;
+  online = false;
+  execFile('taskkill', ['/im', basename(GAME), '/f'], () => {});
+}
+
 function advance() {
-  if (!session && online && line.length > 0) {
+  if (!session && online && !switching && line.length > 0 && needsLevelChange(line[0])) {
+    switchGameTo(line[0].level);
+    broadcast();
+    return;
+  }
+  if (!session && online && !switching && line.length > 0) {
     const ws = line.shift();
     session = {
       ws,
@@ -145,19 +192,11 @@ function endSession(reason) {
 function checkSession() {
   if (!session?.signalling) return;
   const now = Date.now();
-  const idleLimit = line.length > 0 ? IDLE_SECONDS_WAITING : IDLE_SECONDS_ALONE;
-  let deadline = session.lastActive + idleLimit * 1000;
-  let reason = 'idle';
-  if (line.length > 0) {
-    // Someone is waiting: the session ends after SESSION_SECONDS, but never without a full warning.
-    session.deadline ||= Math.max(session.startedAt + SESSION_SECONDS * 1000, now + WARNING_SECONDS * 1000);
-    if (session.deadline < deadline) {
-      deadline = session.deadline;
-      reason = 'time';
-    }
-  } else {
-    session.deadline = 0;
-  }
+  // Someone else joining the line never shortens or ends the current session: it ends only when its own viewer leaves
+  // or goes idle for IDLE_SECONDS_ALONE (no time cap, and no shorter idle limit while others wait).
+  const deadline = session.lastActive + IDLE_SECONDS_ALONE * 1000;
+  const reason = 'idle';
+  session.deadline = 0;
 
   if (now >= deadline) {
     endSession(reason);
@@ -176,12 +215,57 @@ setInterval(checkSession, 1000);
 
 // ---- Is the game streaming? -----------------------------------------------------------------
 
+// ---- Is a player really in the game? --------------------------------------------------------
+// The signalling server lists the viewers it has connected to the streamer. That list is compared with the gateway's
+// own idea of who holds the stream, so a stale record can't lock everyone out ("in use" with nobody there):
+//  - a session whose viewer is not in the game for PLAYER_ABSENT_SECONDS is ended, so the next visitor is let in;
+//  - a viewer the gateway has no session for (it holds the single slot, --max_players 1) is disconnected after
+//    GHOST_SECONDS, when it came through the gateway.
+const PLAYER_ABSENT_SECONDS = 12;
+const GHOST_SECONDS = 8;
+/** Proxied signalling sockets (the browser side), so a stale viewer can be disconnected. */
+const signallingSockets = new Set();
+let absentSince = 0;
+let ghostSince = 0;
+
+function checkPlayers(players) {
+  const now = Date.now();
+
+  if (session?.signalling && online && players === 0) {
+    absentSince ||= now;
+    if (now - absentSince > PLAYER_ABSENT_SECONDS * 1000) {
+      log(`session ${session.id}: the signalling server shows no viewer in the game, ending it so the next visitor can join`);
+      absentSince = 0;
+      endSession('absent');
+    }
+  } else {
+    absentSince = 0;
+  }
+
+  if (players > 0 && !session?.signalling) {
+    ghostSince ||= now;
+    if (now - ghostSince > GHOST_SECONDS * 1000) {
+      log(`${players} viewer(s) in the game but no session holds the stream: disconnecting ${signallingSockets.size} stale connection(s)`);
+      ghostSince = 0;
+      for (const socket of signallingSockets) socket.destroy();
+    }
+  } else {
+    ghostSince = 0;
+  }
+}
+
 async function checkOnline() {
   let streaming = false;
+  // Viewers connected to the streamer, or null when the signalling server could not be asked.
+  let players = null;
   try {
     const response = await fetch(`http://127.0.0.1:${UPSTREAM}/api/streamers`, { signal: AbortSignal.timeout(3000) });
-    // A streamer counts once it has identified itself (streaming), not just connected.
-    streaming = response.ok && (await response.json()).some((streamer) => streamer.streaming);
+    if (response.ok) {
+      const streamers = await response.json();
+      // A streamer counts once it has identified itself (streaming), not just connected.
+      streaming = streamers.some((streamer) => streamer.streaming) && warmedUp();
+      players = streamers.reduce((total, streamer) => total + (streamer.subscribers?.length ?? 0), 0);
+    }
   } catch {
     streaming = false;
   }
@@ -196,6 +280,9 @@ async function checkOnline() {
     }
     advance();
   }
+  if (players !== null) checkPlayers(players);
+  // A visitor may have been waiting for the game to come back (after a level restart): give the turn now.
+  if (!session && online && !switching && line.length > 0) advance();
 }
 setInterval(checkOnline, 3000);
 void checkOnline();
@@ -208,6 +295,11 @@ const gameImage = basename(GAME);
 let launches = [];
 let pausedUntil = 0;
 let gameSeen = false;
+// Heartbeat bookkeeping: only a game that has beaten since it was launched or adopted can be declared hung (an older
+// build without the heartbeat never beats, and must not be killed).
+let beatMtime = 0;
+let beatChangedAt = Date.now();
+let beatSeen = false;
 // Last time the game was streaming or was (re)launched.
 let lastHealthy = Date.now();
 
@@ -220,8 +312,15 @@ function isGameRunning() {
 }
 
 function launchGame() {
+  if (pendingLevel) {
+    gameLevel = pendingLevel;
+    pendingLevel = '';
+  }
+  // Only a restart for a level change is intentional; crashes and hangs count towards the crash-loop guard.
+  const intentional = switching;
+  switching = false;
   const args = [
-    '/Game/Main',
+    LEVEL_MAPS[gameLevel] || '/Game/Main',
     WINDOWED ? '-Windowed' : '-RenderOffscreen',
     '-ResX=1920',
     '-ResY=1080',
@@ -233,10 +332,17 @@ function launchGame() {
     `-PixelStreamingConnectionURL=ws://127.0.0.1:${STREAMER_PORT}`,
     ...GAME_ARGS
   ];
+  log(`launching the game in the ${gameLevel} level`);
   if (GAME_ARGS.length) log(`launching the game with extra arguments: ${GAME_ARGS.join(' ')}`);
   // Detached, so the game keeps running if the gateway's window is closed (stop_experience.bat stops both).
+  // A new launch warms up again: forget the last one's marker.
+  if (WARMUP_FILE) rmSync(WARMUP_FILE, { force: true });
+  warmupLogged = false;
+  gameLaunchedAt = Date.now();
   spawn(GAME, args, { detached: true, stdio: 'ignore' }).unref();
-  launches.push(Date.now());
+  beatSeen = false;
+  beatChangedAt = Date.now();
+  if (!intentional) launches.push(Date.now());
   lastHealthy = Date.now();
 }
 
@@ -248,6 +354,25 @@ async function watchGame() {
     const running = await isGameRunning();
     const now = Date.now();
     if (online) lastHealthy = now;
+    if (running && HEARTBEAT_FILE) {
+      let mtime = 0;
+      try {
+        mtime = statSync(HEARTBEAT_FILE).mtimeMs;
+      } catch {
+        // No heartbeat file yet.
+      }
+      if (mtime !== beatMtime) {
+        if (beatMtime !== 0) beatSeen = true;
+        beatMtime = mtime;
+        beatChangedAt = now;
+      } else if (beatSeen && now - beatChangedAt > HEARTBEAT_STALE_SECONDS * 1000) {
+        log(`game heartbeat stopped ${HEARTBEAT_STALE_SECONDS} s ago (hung), killing it`);
+        execFile('taskkill', ['/im', gameImage, '/f'], () => {});
+        beatSeen = false;
+        beatChangedAt = now;
+        return;
+      }
+    }
     if (!running) {
       if (now < pausedUntil) return;
       launches = launches.filter((time) => now - time < LAUNCH_WINDOW_MINUTES * 60000);
@@ -391,9 +516,33 @@ queueServer.on('connection', (ws) => {
     }
     if (message.type === 'join') {
       if (session?.ws === ws || line.includes(ws)) return;
+      // The same browser tab joining again (reload, or a page that lost its stream): its earlier place is stale, so
+      // drop it instead of making the visitor queue behind themselves until that session times out.
+      if (typeof message.level === 'string') ws.level = message.level.slice(0, 32);
+      const client = typeof message.client === 'string' ? message.client.slice(0, 64) : '';
+      if (client) {
+        ws.clientId = client;
+        for (let i = line.length - 1; i >= 0; i--) {
+          if (line[i] !== ws && line[i].clientId === client) line.splice(i, 1);
+        }
+        if (session && session.ws !== ws && session.ws.clientId === client) {
+          log(`${ws.visitorId} replaces its own earlier session ${session.id}`);
+          endSession('replaced');
+        }
+      }
       line.push(ws);
       log(`${ws.visitorId} joined the line (${line.length} waiting)`);
       advance();
+    } else if (message.type === 'level') {
+      // The visitor picked another level while streaming: end the session and restart the game into it. They keep
+      // their place at the front of the line and the page reconnects when the game is back.
+      if (typeof message.level !== 'string') return;
+      ws.level = message.level.slice(0, 32);
+      if (session?.ws === ws) {
+        endSession('switch');
+        if (!line.includes(ws)) line.unshift(ws);
+        advance();
+      }
     } else if (message.type === 'leave') {
       leave(ws, 'left');
     } else if (message.type === 'active' && session?.ws === ws) {
@@ -442,6 +591,8 @@ function forwardSignalling(request, socket, head) {
     socket.destroy();
     upstream.destroy();
   };
+  signallingSockets.add(socket);
+  socket.on('close', () => signallingSockets.delete(socket));
   socket.on('close', close).on('error', close);
   upstream.on('close', close).on('error', close);
 }

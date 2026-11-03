@@ -279,14 +279,14 @@ function wake() {
   });
 }
 
-// Identifies this browser to the gateway across reloads and tabs, so opening the experience again (new tab, reload) replaces
-// the browser's own earlier session instead of queueing behind it.
+// Identifies this browser TAB to the gateway across reloads of the tab, so reloading replaces the tab's own earlier
+// session instead of queueing behind it. A second tab gets its own id and never evicts the first one's session.
 const clientId = (() => {
   try {
-    let id = localStorage.getItem('archv3d-client');
+    let id = sessionStorage.getItem('archv3d-client');
     if (!id) {
       id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('archv3d-client', id);
+      sessionStorage.setItem('archv3d-client', id);
     }
     return id;
   } catch {
