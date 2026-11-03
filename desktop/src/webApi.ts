@@ -127,14 +127,27 @@ async function cloudStatus(): Promise<Status['cloud']> {
   }
 }
 
-function overall(stream: Status['stream'], cloud: Status['cloud']): Status['overall'] {
+function overall(stream: Status['stream'], cloud: Status['cloud'], local: Status['local']): Status['overall'] {
   if (stream.reachable) {
     if (!stream.online) return { key: 'starting', label: 'Starting up' };
     return stream.busy ? { key: 'busy', label: stream.waiting ? `In use · ${stream.waiting} waiting` : 'In use' } : { key: 'available', label: 'Available' };
   }
+  if (local.running) return { key: 'starting', label: 'Starting on this PC' };
   if (cloud.status === 'asleep') return { key: 'asleep', label: 'Asleep · wakes on request' };
   if (cloud.status === 'starting' || cloud.status === 'running') return { key: 'starting', label: 'Cloud starting' };
   return { key: 'off', label: 'Unavailable' };
+}
+
+/** What the desktop app on the PC last reported to the control Worker. Needs the token: without one there's no link. */
+async function pcStatus(): Promise<Pick<Status, 'local' | 'pcLink'>> {
+  const none = { game: false, tunnel: false, running: false };
+  if (!load().adminToken) return { local: none };
+  try {
+    const pc = await controlFetch('admin/pc');
+    return { local: pc.state ?? none, pcLink: { online: pc.online, pending: pc.pending } };
+  } catch (error) {
+    return { local: none, pcLink: { online: false, pending: null, error: (error as Error).message } };
+  }
 }
 
 let last: Status | null = null;
@@ -142,10 +155,14 @@ const statusListeners = new Set<(status: Status) => void>();
 
 async function refresh() {
   const config = load();
-  const [site, stream, cloud] = await Promise.all([siteStatus(config.siteUrl), streamStatus(config.queueUrl), cloudStatus()]);
-  // The PC's own processes aren't visible from a phone: a stream that isn't the running cloud machine is "unknown".
-  const servedBy = stream.reachable ? (cloud.status === 'running' ? 'cloud' : 'unknown') : null;
-  last = { checkedAt: Date.now(), site, stream, cloud, local: { game: false, tunnel: false, running: false }, servedBy, overall: overall(stream, cloud) };
+  const [site, stream, cloud, { local, pcLink }] = await Promise.all([
+    siteStatus(config.siteUrl),
+    streamStatus(config.queueUrl),
+    cloudStatus(),
+    pcStatus()
+  ]);
+  const servedBy = stream.reachable ? (cloud.status === 'running' ? 'cloud' : local.running ? 'local' : 'unknown') : null;
+  last = { checkedAt: Date.now(), site, stream, cloud, local, pcLink, servedBy, overall: overall(stream, cloud, local) };
   statusListeners.forEach((listener) => last && listener(last));
   return last;
 }
@@ -162,20 +179,27 @@ function startPolling() {
 
 const ACTION_LABELS: Partial<Record<ActionName, string>> = {
   cloudOn: 'Turning the cloud stream on',
-  cloudOff: 'Turning the cloud stream off'
+  cloudOff: 'Turning the cloud stream off',
+  localStart: 'Asking the PC to start the stream',
+  localStop: 'Asking the PC to stop the stream'
 };
 const actionListeners = new Set<(event: ActionEvent) => void>();
 let busy = false;
 
 async function runAction(name: ActionName) {
   const label = ACTION_LABELS[name];
-  if (!label) throw new Error('That can only be done from the PC.');
+  if (!label) throw new Error('Unknown action.');
   if (busy) throw new Error('Another action is still running.');
   busy = true;
   const emit = (event: Omit<ActionEvent, 'name' | 'label'>) => actionListeners.forEach((listener) => listener({ name, label, ...event }));
   emit({ state: 'running' });
   try {
-    await controlFetch('admin/cloud', { method: 'POST', body: { action: name === 'cloudOn' ? 'on' : 'off' } });
+    if (name === 'localStart' || name === 'localStop') {
+      // Queued for the desktop app on the PC, which picks it up within about 10 seconds.
+      await controlFetch('admin/pc/command', { method: 'POST', body: { action: name === 'localStart' ? 'start' : 'stop' } });
+    } else {
+      await controlFetch('admin/cloud', { method: 'POST', body: { action: name === 'cloudOn' ? 'on' : 'off' } });
+    }
     emit({ state: 'done' });
   } catch (error) {
     emit({ state: 'error', error: (error as Error).message });

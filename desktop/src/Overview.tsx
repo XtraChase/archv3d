@@ -45,6 +45,9 @@ export function Overview({ status, running, hasToken, onAction, onSettings }: Pr
   const { site, stream, cloud, local } = status;
   const instance = cloud.instance;
   const cloudAllowed = instance ? instance.wake === 'on' : cloud.status !== 'off' && cloud.status !== 'error';
+  const link = status.pcLink;
+  // Phone: the PC answers only while the desktop app runs on it, and one command at a time.
+  const blocked = Boolean(link && (!link.online || link.pending));
   const busy = running !== null;
 
   return (
@@ -132,24 +135,34 @@ export function Overview({ status, running, hasToken, onAction, onSettings }: Pr
         </div>
       </section>
 
-      {!isPhone && (
+      {(!isPhone || link) && (
         <section className="panel card">
           <p className="kicker">This PC</p>
-          <h3>{local.running ? (stream.reachable && status.servedBy === 'local' ? 'Streaming' : 'Running') : 'Stopped'}</h3>
-          <dl className="facts">
-            <dt>Experience</dt>
-            <dd>{local.game ? 'Running' : 'Not running'}</dd>
-            <dt>Cloudflare tunnel</dt>
-            <dd>{local.tunnel ? 'Connected' : 'Not running'}</dd>
-          </dl>
-          <p className="note">Starting here turns the cloud machine off; the two share the same address.</p>
+          <h3>
+            {link && !link.online ? 'Not connected' : local.running ? (stream.reachable && status.servedBy === 'local' ? 'Streaming' : 'Running') : 'Stopped'}
+          </h3>
+          {(!link || link.online) && (
+            <dl className="facts">
+              <dt>Experience</dt>
+              <dd>{local.game ? 'Running' : 'Not running'}</dd>
+              <dt>Cloudflare tunnel</dt>
+              <dd>{local.tunnel ? 'Connected' : 'Not running'}</dd>
+            </dl>
+          )}
+          <p className="note">
+            {link && !link.online
+              ? link.error ?? 'The desktop app on the PC reports here every few seconds. Turn the PC on and open archv3d Control (Settings › Start with Windows keeps it connected).'
+              : link?.pending
+                ? `Waiting for the PC to ${link.pending} the stream…`
+                : 'Starting here turns the cloud machine off; the two share the same address.'}
+          </p>
           <div className="actions">
             {local.running ? (
-              <button className="button" disabled={busy} onClick={() => onAction('localStop')}>
+              <button className="button" disabled={busy || blocked} onClick={() => onAction('localStop')}>
                 {running === 'localStop' ? 'Stopping…' : 'Stop'}
               </button>
             ) : (
-              <button className="button button-primary" disabled={busy} onClick={() => onAction('localStart')}>
+              <button className="button button-primary" disabled={busy || blocked} onClick={() => onAction('localStart')}>
                 {running === 'localStart' ? 'Starting…' : 'Start'}
               </button>
             )}

@@ -559,3 +559,7 @@ UE builds the catalog dynamically (scan camera point actors + LevelVariantSets) 
   line) and session length (10). Control Worker POST /admin/cloud/settings -> instance tags (aws.ts SETTING_FIELDS, also the
   ranges); GET /admin/cloud returns `settings`. servers/gateway.mjs with `--imds_settings` (added by start_experience.bat
   cloud) reads the tags from the instance metadata every minute. Needs aws\upload.ps1 + a boot to take effect on the machine.
+- 2026-11-02 – Start/stop the PC stream from the phone (desktop 1.3.0): control/src/pc.ts keeps the PC's reported state, one
+  pending command and the last result in the D1 cache table; the desktop app polls every 10 s (main.cjs pollPc) and runs
+  localStart/localStop; the phone's This PC card sends commands (409 when the app isn't connected). Cloud "on" queues a stop for
+  a running PC stream.

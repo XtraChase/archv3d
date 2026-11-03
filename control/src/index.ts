@@ -13,12 +13,16 @@
 //   GET  /admin/cloud                    instance id, state, wake tag, type, launch time, and the cloud settings
 //   POST /admin/cloud/settings {...}     idle power-off, session length and idle disconnect minutes (instance tags)
 //   POST /admin/cloud {action: on|off}   on: allow waking and start; off: disallow waking and stop
+//   GET  /admin/pc                       the PC's state (reported by the desktop app), pending command, last result
+//   POST /admin/pc/command {action}      start|stop the stream on the PC (the desktop app runs it); 409 when it's offline
+//   POST /admin/pc/poll {state, result}  the desktop app's poll: reports state, returns the pending command
 //   GET  /admin/insights?days=30         visitors, pages, places, organizations, leads
 //   POST /admin/leads/delete {id}        removes a contact lead
 //   GET  /admin/costs[?fresh=1]          AWS month-to-date cost by service (cached 6 h)
 import { findInstance, hasAwsKey, monthToDateCosts, readSettings, SETTING_FIELDS, setTags, setWake, startInstance, stopInstance, type CloudSettings, type Instance } from './aws';
 import { allowedOrigin, isAdmin, preflight, reply, type Env } from './http';
 import { cached, cleanup, deleteLead, ingest, summary } from './insights';
+import { PcOffline, pcStatus, poll, sendCommand, stopPcIfRunning, type PcAction } from './pc';
 
 type Status = 'off' | 'asleep' | 'starting' | 'running';
 
@@ -82,6 +86,8 @@ async function admin(request: Request, env: Env, pathname: string, url: URL) {
     if (action === 'on') {
       await setWake(env, instance.id, true);
       if (instance.state === 'stopped') await startInstance(env, instance.id);
+      // The stream on the PC shares the tunnel: have the desktop app stop it.
+      if (env.DB) await stopPcIfRunning(env).catch((error) => console.error(`stop PC failed: ${error.message}`));
     } else if (action === 'off') {
       await setWake(env, instance.id, false);
       if (instance.state === 'running' || instance.state === 'pending') await stopInstance(env, instance.id);
@@ -94,6 +100,22 @@ async function admin(request: Request, env: Env, pathname: string, url: URL) {
   }
 
   if (!env.DB) return reply({ error: 'database not configured (D1 binding DB)' }, 503);
+  if (pathname === '/admin/pc' && request.method === 'GET') return reply(await pcStatus(env), 200);
+  if (pathname === '/admin/pc/command' && request.method === 'POST') {
+    const { action } = (await request.json().catch(() => ({}))) as { action?: string };
+    if (action !== 'start' && action !== 'stop') return reply({ error: 'action must be start or stop' }, 400);
+    try {
+      await sendCommand(env, action as PcAction);
+    } catch (error) {
+      if (error instanceof PcOffline) return reply({ error: error.message }, 409);
+      throw error;
+    }
+    console.log(`admin pc ${action}`);
+    return reply({ ok: true }, 200);
+  }
+  if (pathname === '/admin/pc/poll' && request.method === 'POST') {
+    return reply(await poll(env, (await request.json().catch(() => ({}))) as Parameters<typeof poll>[1]), 200);
+  }
   if (pathname === '/admin/insights' && request.method === 'GET') {
     const days = Math.min(400, Math.max(1, Number(url.searchParams.get('days')) || 30));
     return reply(await summary(env, days), 200);

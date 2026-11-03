@@ -19,6 +19,8 @@ export interface Status {
   stream: { reachable: boolean; online?: boolean; busy?: boolean; waiting?: number };
   cloud: { status: CloudState; instance: Instance | null; settings?: CloudSettings; source?: 'admin' | 'public'; error?: string };
   local: { game: boolean; tunnel: boolean; running: boolean };
+  /** Phone app only: the link to the PC through the control Worker (the desktop app on the PC reports to it). */
+  pcLink?: { online: boolean; pending: 'start' | 'stop' | null; error?: string };
   servedBy: 'cloud' | 'local' | 'unknown' | null;
   overall: { key: OverallKey; label: string };
 }

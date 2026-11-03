@@ -137,6 +137,41 @@ async function runAction(name) {
   }
 }
 
+// ---- Commands from the phone ---------------------------------------------------------------------------
+// This PC can't be reached from outside, so it asks the control Worker every few seconds (reporting what runs here) and
+// runs the start or stop the phone app queued there (control/src/pc.ts).
+
+const PC_POLL_MS = 10000;
+let pcResult = null;
+let pcPolling = false;
+let pcWarned = false;
+
+async function pollPc() {
+  if (pcPolling || !backend.hasAdminToken()) return;
+  pcPolling = true;
+  try {
+    const reply = await backend.pcPoll(await backend.localStatus(), pcResult);
+    pcResult = null;
+    pcWarned = false;
+    if (reply.command) {
+      const { id, action } = reply.command;
+      try {
+        await runAction(action === 'start' ? 'localStart' : 'localStop');
+        pcResult = { id, ok: true };
+      } catch (error) {
+        pcResult = { id, ok: false, error: error.message };
+      }
+      // Report the result at once rather than at the next poll.
+      setTimeout(pollPc, 500);
+    }
+  } catch (error) {
+    if (!pcWarned) console.error('phone link failed', error.message);
+    pcWarned = true;
+  } finally {
+    pcPolling = false;
+  }
+}
+
 /** New contact leads and new organization visits, as Windows notifications. */
 async function checkForNews() {
   const config = backend.readConfig();
@@ -187,6 +222,7 @@ ipcMain.handle('settings:get', () => backend.publicSettings());
 ipcMain.handle('settings:save', async (_event, changes) => {
   const settings = backend.saveSettings(changes ?? {});
   refreshStatus();
+  pollPc();
   return settings;
 });
 ipcMain.handle('settings:generateToken', () => backend.generateToken());
@@ -205,6 +241,8 @@ app.whenReady().then(() => {
   createWindow();
   refreshStatus();
   setInterval(refreshStatus, STATUS_EVERY_MS);
+  pollPc();
+  setInterval(pollPc, PC_POLL_MS);
   setTimeout(checkForNews, 10000);
   setInterval(checkForNews, INSIGHTS_EVERY_MS);
 });

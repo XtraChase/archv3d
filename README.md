@@ -37,9 +37,14 @@ whichever level the current visitor picked.
   **Phone app** (Android/Chrome, installable from the browser as "archv3d Control"): `npm run build:phone` builds the
   renderer with `src/webApi.ts` in place of Electron's main process into `control/public/`, which the control Worker
   serves at its root (`https://archv3d-control.<account>.workers.dev/`, `assets` in `control/wrangler.jsonc`); commit the
-  result. It has the cloud on/off, visitors, costs and messages, but not the stream on this PC and no background
-  notifications. The admin token is kept in the phone browser's storage, set up from the QR code (the link carries it
+  result. It has the cloud on/off, visitors, costs and messages, and start/stop of the stream on this PC (below), but no
+  background notifications. The admin token is kept in the phone browser's storage, set up from the QR code (the link carries it
   after the `#`, which is never sent to a server). To remove a lost phone, rotate `ADMIN_TOKEN` in Cloudflare.
+  **Start/stop the PC from the phone:** the PC can't be reached from outside, so the desktop app polls the control Worker
+  every 10 s (`POST /admin/pc/poll`, `control/src/pc.ts`), reports what runs on the PC and runs the start or stop the phone
+  queued (`POST /admin/pc/command`, dropped after 2 min). It works only while the PC is on and the desktop app is running
+  (Settings > Start with Windows); otherwise the phone shows the PC as not connected. Turning the cloud on queues a stop
+  for a PC that is streaming, since they share the tunnel.
 - `aws/` – the AWS EC2 g5.xlarge (NVIDIA A10G, Cloud Gaming driver, Windows Server 2022, us-west-2) that runs the stream
   instead of this PC: `config.ps1` (names), `create-instance.ps1` (one time: bucket, instance role, security group,
   instance), `userdata.txt` + `vm-startup.ps1` (every boot: installs, driver, page file, logs from before the boot,
