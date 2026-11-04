@@ -244,7 +244,7 @@ a.experience-card:hover { transform: translateY(-4px); border-color: rgba(217, 1
   position: relative;
   aspect-ratio: 16 / 9;
   background: linear-gradient(135deg, #2a2d33, #16181c);
-  overflow: hidden;
+  overflow: clip; /* clip, not hidden: hidden would stop the picture following the scroll */
 }
 .experience-media img {
   width: 100%;
@@ -348,7 +348,7 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   height: clamp(240px, 30vw, 380px);
   border-radius: var(--radius);
   background: var(--surface-2);
-  overflow: hidden;
+  overflow: clip; /* clip, not hidden: hidden would stop the picture following the scroll */
 }
 .work-card:nth-child(8n) .work-media { height: clamp(260px, 38vw, 520px); }
 .work-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s ease; }
@@ -786,7 +786,7 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 }
 .process-link:hover { text-decoration: underline; }
 
-/* ---- Scroll reveal (reveal.ts) and hero scroll-out -------------------------------------------- */
+/* ---- Scroll motion: reveal (reveal.ts), hero scroll-out, marquee, parallax ----------------------------- */
 
 /* Hidden only once reveal.ts has started (html.reveal-on) and until it marks the element data-revealed. */
 :root { --reveal-ease: cubic-bezier(0.2, 0.75, 0.2, 1); }
@@ -794,10 +794,32 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   transition:
     opacity 0.9s var(--reveal-ease) var(--reveal-delay, 0ms),
     translate 1.1s var(--reveal-ease) var(--reveal-delay, 0ms),
-    filter 0.9s var(--reveal-ease) var(--reveal-delay, 0ms);
+    transform 1.2s var(--reveal-ease) var(--reveal-delay, 0ms);
 }
-.reveal-on [data-reveal='rise']:not([data-revealed]) { opacity: 0; translate: 0 36px; filter: blur(6px); }
-.reveal-on [data-reveal='card']:not([data-revealed]) { opacity: 0; translate: 0 48px; }
+.reveal-on [data-reveal='rise']:not([data-revealed]) { opacity: 0; translate: 0 48px; }
+.reveal-on [data-reveal='card']:not([data-revealed]) { opacity: 0; translate: 0 64px; }
+
+/* Section titles: the kicker's letters draw together, the title rises out of a lean, the lede follows. */
+.reveal-on [data-reveal='title'] > * {
+  transition:
+    opacity 0.9s var(--reveal-ease),
+    translate 1.1s var(--reveal-ease),
+    transform 1.2s var(--reveal-ease),
+    letter-spacing 1.4s var(--reveal-ease);
+}
+.reveal-on [data-reveal='title'] > .section-title { transition-delay: 120ms; transform-origin: 0 100%; }
+.reveal-on [data-reveal='title'] > .section-lede { transition-delay: 260ms; }
+.reveal-on [data-reveal='title']:not([data-revealed]) > * { opacity: 0; }
+.reveal-on [data-reveal='title']:not([data-revealed]) > .section-title { translate: 0 0.6em; transform: skewY(5deg); }
+.reveal-on [data-reveal='title']:not([data-revealed]) > .section-lede { translate: 0 28px; }
+@media (min-width: 641px) {
+  .reveal-on [data-reveal='title']:not([data-revealed]) > .kicker { letter-spacing: 0.7em; }
+}
+
+/* Service cards flip up from lying back in perspective. */
+.service-grid { perspective: 1400px; }
+.reveal-on .service-card[data-reveal] { transform-origin: 50% 100%; }
+.reveal-on .service-card[data-reveal]:not([data-revealed]) { transform: rotateX(32deg); }
 
 /* Curtain: the picture is uncovered bottom-up while it settles from a slight zoom. The clip goes on the children, not
    the element: a fully clipped element counts as invisible, so it would never report scrolling into view. */
@@ -815,28 +837,91 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   transition: clip-path 1.3s var(--reveal-ease) calc(var(--reveal-delay, 0ms) + 120ms);
 }
 .reveal-on .work-card[data-reveal]:not([data-revealed]) .work-media { clip-path: inset(100% 0 0 0); }
-.reveal-on .work-card[data-reveal] .work-media img { scale: 1; transition: transform 0.7s ease, scale 1.6s var(--reveal-ease); }
-.reveal-on .work-card[data-reveal]:not([data-revealed]) .work-media img { scale: 1.15; }
+.reveal-on .work-card[data-reveal] .work-media img { transition: transform 0.7s ease, scale 1.6s var(--reveal-ease); }
+.reveal-on .work-card[data-reveal]:not([data-revealed]) .work-media img { scale: 1.4; }
 
-/* Hero scroll-out, driven by the page's scroll position (no script): the headline lifts, softens and fades while the
-   building drifts up more slowly behind it. Browsers without scroll-driven animations just scroll normally. */
+/* Marquee: two giant outlined rows between the experiences and "From drawing to built". */
+.marquee {
+  margin-top: clamp(56px, 8vw, 112px);
+  overflow: clip; /* clip, not hidden: hidden would stop the rows following the scroll */
+  pointer-events: none;
+  user-select: none;
+}
+.marquee-row {
+  width: max-content;
+  white-space: nowrap;
+  font-family: var(--serif);
+  font-size: clamp(64px, 11vw, 176px);
+  line-height: 1.05;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(217, 183, 126, 0.55);
+}
+.marquee-row.is-reverse { font-style: italic; -webkit-text-stroke-color: rgba(242, 242, 240, 0.22); translate: -30% 0; }
+
+/* Everything driven by the scroll position itself (no script). Browsers without scroll-driven animations get the
+   page without these, and nothing is hidden by them. */
 @supports (animation-timeline: scroll()) {
-  .hero-inner {
-    animation: hero-out linear both;
+  /* Hero: layers leave at different speeds; the headline splits, "Motion" spreading to the right; the drafting grid
+     zooms in as if flying into the drawing; the building lifts and grows (and spins, in HeroBuilding.tsx). */
+  .hero .kicker,
+  .hero-title,
+  .hero-title em,
+  .hero-lede,
+  .hero-actions,
+  .hero-visual,
+  .hero::before {
     animation-timeline: scroll(root);
-    animation-range: 0 80vh;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
   }
-  @keyframes hero-out {
-    to { opacity: 0; translate: 0 -90px; scale: 0.97; filter: blur(5px); }
+  .hero .kicker { animation-name: hero-kicker-out; animation-range: 0 55vh; }
+  .hero-title { animation-name: hero-title-out; animation-range: 0 85vh; }
+  .hero-title em { display: inline-block; animation-name: hero-em-out; animation-range: 0 85vh; }
+  /* The lede and buttons clear out before the headline passes over them. */
+  .hero-lede { animation-name: hero-lede-out; animation-range: 0 26vh; }
+  .hero-actions { animation-name: hero-lede-out; animation-range: 0 32vh; }
+  .hero-visual { animation-name: hero-visual-out; animation-range: 0 100vh; }
+  .hero::before { animation-name: hero-grid-in; animation-range: 0 100vh; }
+  @keyframes hero-kicker-out { to { opacity: 0; translate: 0 -160px; letter-spacing: 0.6em; } }
+  @keyframes hero-title-out { to { opacity: 0; translate: -16vw -40px; } }
+  @keyframes hero-em-out { to { translate: 34vw 0; letter-spacing: 0.12em; } }
+  @keyframes hero-lede-out { to { opacity: 0; translate: 0 -40px; } }
+  @keyframes hero-visual-out { to { translate: 0 -14%; scale: 1.28; } }
+  @keyframes hero-grid-in { to { scale: 1.7; translate: 0 18%; opacity: 0.15; } }
+
+  /* Marquee rows glide in opposite directions while they cross the screen. */
+  .marquee-row { animation: marquee-left linear both; animation-timeline: view(); animation-range: cover; }
+  .marquee-row.is-reverse { animation-name: marquee-right; }
+  @keyframes marquee-left { from { translate: 0 0; } to { translate: -30% 0; } }
+  @keyframes marquee-right { from { translate: -30% 0; } to { translate: 0 0; } }
+
+  /* Pictures move slower than their frames, like looking through windows. Scaled up so they always cover. */
+  .work-media img,
+  .experience-media img {
+    scale: 1.24;
+    animation: picture-parallax linear both;
+    animation-timeline: view();
+    animation-range: cover;
   }
-  .hero-visual {
-    animation: hero-visual-out linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 100vh;
+  @keyframes picture-parallax { from { translate: 0 -9%; } to { translate: 0 9%; } }
+  .reveal-on .work-card[data-reveal] .work-media img { scale: 1.24; }
+
+  /* The drawing-to-built frame tilts up like a drawing board being raised. */
+  .process-frame {
+    transform-origin: 50% 100%;
+    animation: board-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 42%;
   }
-  @keyframes hero-visual-out {
-    to { translate: 0 -12%; scale: 1.06; }
+  @keyframes board-up { from { transform: perspective(1400px) rotateX(40deg); } to { transform: perspective(1400px) rotateX(0deg); } }
+
+  /* The showreel grows from a smaller window to full width as it reaches the middle of the screen. */
+  .reel {
+    animation: reel-grow linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 45%;
   }
+  @keyframes reel-grow { from { scale: 0.78; } to { scale: 1; } }
 }
 
 /* ---- Small screens ---------------------------------------------------------------------- */
@@ -876,9 +961,9 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Except the scroll animations (hero scroll-out and reveal.ts), which play for everyone by the owner's choice, like the
-     turning building. */
-  :where(*, *::before, *::after):not(.hero-inner, .hero-visual, [data-reveal], [data-reveal] *) {
+  /* Except the scroll motion (hero, marquee, reveal.ts and the pictures inside revealed blocks), which plays for
+     everyone by the owner's choice, like the turning building. */
+  :where(*, *::before, *::after):not(.hero *, .hero-visual, [data-reveal], [data-reveal] *, .marquee *) {
     animation: none !important;
     transition: none !important;
   }

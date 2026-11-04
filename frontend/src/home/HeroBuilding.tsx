@@ -14,7 +14,10 @@ const WARM = '255, 206, 138';
 const SECONDS_PER_TURN = 40;
 // A slow turn needs no more than 30 fps; phones get 20 to save battery.
 const frameMs = () => 1000 / (window.matchMedia('(pointer: coarse)').matches ? 20 : 30);
-const TILT = 0.36; // camera looks down by about 21 degrees
+const TILT = 0.36; // camera looks down by about 21 degrees at the top of the page
+// Scrolling the hero away lifts the camera like a drone (to about 56 degrees) and spins the tower faster.
+const TILT_SCROLLED = 0.98;
+const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
 
@@ -189,15 +192,15 @@ const lerp = (a: Point, b: Point, t: number): Point => [a[0] + (b[0] - a[0]) * t
 
 // ---- Drawing ----------------------------------------------------------------------------------------------------
 
-function draw(context: CanvasRenderingContext2D, width: number, height: number, angle: number) {
+function draw(context: CanvasRenderingContext2D, width: number, height: number, angle: number, tilt = TILT) {
   context.clearRect(0, 0, width, height);
   const scale = Math.min(width, height) / 6.1;
   const cx = width / 2;
   const cy = height * 0.5;
   const cosA = Math.cos(angle);
   const sinA = Math.sin(angle);
-  const cosT = Math.cos(TILT);
-  const sinT = Math.sin(TILT);
+  const cosT = Math.cos(tilt);
+  const sinT = Math.sin(tilt);
   const distance = 11;
 
   // Model space -> camera space (turn about y, then tilt about x) -> screen.
@@ -400,6 +403,9 @@ export function HeroBuilding() {
     let width = 0;
     let height = 0;
     let angle = -0.5;
+    let tilt = TILT;
+    let spin = 0; // extra turning speed from scrolling, decays each frame
+    let lastScroll = window.scrollY;
     let frame = 0;
     let last = 0;
     let visible = true;
@@ -409,7 +415,7 @@ export function HeroBuilding() {
     const render = () => {
       const ratio = pixelRatio();
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      draw(context, width, height, angle);
+      draw(context, width, height, angle, tilt);
     };
     const resize = () => {
       if (!started) return;
@@ -425,6 +431,11 @@ export function HeroBuilding() {
       frame = requestAnimationFrame(tick);
       if (last && time - last < frameInterval - 4) return; // the tolerance keeps 60 Hz screens at a steady rate
       if (last) angle += ((time - last) / 1000) * ((Math.PI * 2) / SECONDS_PER_TURN);
+      // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
+      angle += spin;
+      spin *= 0.88;
+      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.9)));
+      tilt += (TILT + (TILT_SCROLLED - TILT) * progress - tilt) * 0.18;
       last = time;
       render();
     };
@@ -447,6 +458,12 @@ export function HeroBuilding() {
     });
     viewObserver.observe(element);
     document.addEventListener('visibilitychange', update);
+    const onScroll = () => {
+      const y = window.scrollY;
+      spin += (y - lastScroll) * SPIN_PER_PIXEL * 0.12;
+      lastScroll = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
     // Nothing is drawn until the page has loaded and the browser is idle, so the drawing never competes with the page
     // itself; then it fades in (.hero-visual.is-ready) and starts turning.
     let idle = 0;
@@ -472,6 +489,7 @@ export function HeroBuilding() {
       sizeObserver.disconnect();
       viewObserver.disconnect();
       document.removeEventListener('visibilitychange', update);
+      window.removeEventListener('scroll', onScroll);
     };
   }, []);
 
