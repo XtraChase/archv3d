@@ -15,9 +15,10 @@ const SECONDS_PER_TURN = 40;
 // A slow turn needs no more than 30 fps; phones get 20 to save battery.
 const frameMs = () => 1000 / (window.matchMedia('(pointer: coarse)').matches ? 20 : 30);
 const TILT = 0.36; // camera looks down by about 21 degrees at the top of the page
-// Scrolling the hero away lifts the camera like a drone, to straight down onto the roof (about 89 degrees, within 45%
-// of a screen of scrolling), and spins the tower faster.
-const TILT_SCROLLED = 1.55;
+// Scrolling the hero away lifts the camera like a drone, to straight down onto the roof (about 89 degrees) within a
+// third of a screen of scrolling, most of it in the first scrolls (ease-out), and spins the tower faster.
+const TILT_SCROLLED = 1.56;
+const TILT_SCROLL_SCREENS = 0.33;
 const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
@@ -435,8 +436,9 @@ export function HeroBuilding() {
       // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
       angle += spin;
       spin *= 0.88;
-      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.45)));
-      tilt += (TILT + (TILT_SCROLLED - TILT) * progress - tilt) * 0.3;
+      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * TILT_SCROLL_SCREENS)));
+      const eased = 1 - Math.pow(1 - progress, 3); // front-loaded: the first scrolls turn it the most
+      tilt += (TILT + (TILT_SCROLLED - TILT) * eased - tilt) * 0.45;
       last = time;
       render();
     };
