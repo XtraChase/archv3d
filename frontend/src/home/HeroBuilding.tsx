@@ -21,10 +21,11 @@ const TILT = 0.36; // camera looks down by about 21 degrees at the top of the pa
 const TILT_SCROLLED = 1.56;
 const TILT_SCROLL_SCREENS = 0.4;
 const TILT_EASE_POWER = 6;
-// Narrow layouts (the building sits under the buttons, home.css max-width 1080px): an even turn, the same for every
-// pixel scrolled, over a longer distance, since the building is only partly on screen at first.
+// Narrow layouts (the building sits under the buttons, home.css max-width 1080px): a gentler, even turn, the same for
+// every pixel scrolled, over a longer distance, and half the scroll spin (touch swipes cover a lot of ground).
 const narrowLayout = () => window.matchMedia('(max-width: 1080px)');
-const TILT_SCROLL_SCREENS_NARROW = 0.6;
+const TILT_SCROLL_SCREENS_NARROW = 1.2;
+const SPIN_NARROW_FACTOR = 0.5;
 const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
@@ -473,7 +474,7 @@ export function HeroBuilding() {
     document.addEventListener('visibilitychange', update);
     const onScroll = () => {
       const y = window.scrollY;
-      spin += (y - lastScroll) * SPIN_PER_PIXEL * 0.12;
+      spin += (y - lastScroll) * SPIN_PER_PIXEL * 0.12 * (narrowQuery.matches ? SPIN_NARROW_FACTOR : 1);
       lastScroll = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
