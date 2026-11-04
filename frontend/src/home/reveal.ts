@@ -1,7 +1,8 @@
 // Scroll reveal for the home page: blocks rise into place, and pictures are unveiled bottom-up ("curtain"), as they
 // scroll into view. Nothing is hidden until this runs: <html class="reveal-on"> switches the hidden state on, and an
 // element is only hidden while it has data-reveal and not data-revealed. Search engines, visitors without JavaScript
-// and pre-rendered pages see everything. Styles in home.css (Scroll reveal).
+// and pre-rendered pages see everything. Styles in home.css (Scroll reveal). It plays even with prefers-reduced-motion
+// (the owner's choice, like the turning building).
 import { useEffect } from 'react';
 
 /** What reveals, and how: 'rise' (fade up), 'card' (fade up, staggered with its siblings), 'curtain' (picture unveiled). */

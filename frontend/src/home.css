@@ -876,5 +876,11 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  /* Except the scroll animations (hero scroll-out and reveal.ts), which play for everyone by the owner's choice, like the
+     turning building. */
+  :where(*, *::before, *::after):not(.hero-inner, .hero-visual, [data-reveal], [data-reveal] *) {
+    animation: none !important;
+    transition: none !important;
+  }
+  * { scroll-behavior: auto !important; }
 }
