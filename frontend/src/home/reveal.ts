@@ -1,10 +1,9 @@
-// Scroll reveal for the home page, scrubbed by scroll position: blocks rise into place and pictures are unveiled
-// bottom-up ("curtain") as they move up through the lower part of the screen, and play backwards in the same place
-// when scrolling up. The animation itself is CSS (home.css, Scroll motion: animation-timeline: view()); this only
-// labels the elements and their stagger. Nothing is hidden unless the browser supports scroll-driven animations and
-// this has run (<html class="reveal-on">), so search engines, visitors without JavaScript, Firefox (no support yet)
-// and pre-rendered pages see everything. It plays even with prefers-reduced-motion (the owner's choice, like the
-// turning building).
+// Scroll reveal for the home page: blocks rise into place, and pictures are unveiled bottom-up ("curtain"), as they
+// scroll into view, and go back as they drop below the screen when scrolling up. Nothing is hidden until this runs:
+// <html class="reveal-on"> switches the hidden state on, and an element is only hidden while it has data-reveal and
+// not data-revealed. Search engines, visitors without JavaScript
+// and pre-rendered pages see everything. Styles in home.css (Scroll reveal). It plays even with prefers-reduced-motion
+// (the owner's choice, like the turning building).
 import { useEffect } from 'react';
 
 /**
@@ -23,24 +22,44 @@ const TARGETS: [string, 'title' | 'rise' | 'card' | 'curtain'][] = [
   ['.about-body', 'rise']
 ];
 
-/** How much later (in pixels scrolled) each card in a row starts. */
-const STAGGER_PX = 45;
+/** Delay between siblings in a row of cards. */
+const STAGGER_MS = 90;
 
 export function useScrollReveal() {
   useEffect(() => {
-    if (typeof CSS === 'undefined' || !CSS.supports('animation-timeline: view()')) return;
+    if (!('IntersectionObserver' in window)) return;
     const root = document.documentElement;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const element = entry.target as HTMLElement;
+          if (entry.isIntersecting) element.dataset.revealed = '';
+          // Scrolling back up: once it drops below the screen it goes back, ready to reveal again on the way down.
+          // (One that leaves at the top stays revealed, so it's in place when scrolled back to.)
+          else if (entry.boundingClientRect.top > 0) delete element.dataset.revealed;
+        }
+      },
+      // Start a little before the element reaches the viewport's bottom edge.
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+    );
+
     for (const [selector, kind] of TARGETS) {
       document.querySelectorAll<HTMLElement>(selector).forEach((element) => {
         // Data attributes, not classes: React doesn't touch them, and an element React replaces simply shows.
         element.dataset.reveal = kind;
         if (kind === 'card') {
           const index = Array.prototype.indexOf.call(element.parentElement?.children ?? [], element) as number;
-          element.style.setProperty('--reveal-start', `${(index % 3) * STAGGER_PX}px`);
+          element.style.setProperty('--reveal-delay', `${(index % 3) * STAGGER_MS}ms`);
         }
+        observer.observe(element);
       });
     }
     root.classList.add('reveal-on');
-    return () => root.classList.remove('reveal-on');
+
+    return () => {
+      observer.disconnect();
+      root.classList.remove('reveal-on');
+    };
   }, []);
 }
