@@ -16,23 +16,11 @@ export function HomePage({ availability, onContact }: { availability: Availabili
     <>
       <Hero />
       <Experiences availability={availability} />
-      <Marquee />
       <DesignToReality />
       <Services />
       <Portfolio />
       <About onContact={() => onContact()} />
     </>
-  );
-}
-
-/** Two giant outlined rows of words gliding in opposite directions as the page scrolls (home.css, Marquee). */
-function Marquee() {
-  const words = 'Drawn · Modeled · Built · Streamed · ';
-  return (
-    <div className="marquee" aria-hidden="true">
-      <div className="marquee-row">{words.repeat(4)}</div>
-      <div className="marquee-row is-reverse">{words.repeat(4)}</div>
-    </div>
   );
 }
 

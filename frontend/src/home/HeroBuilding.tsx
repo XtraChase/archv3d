@@ -15,8 +15,9 @@ const SECONDS_PER_TURN = 40;
 // A slow turn needs no more than 30 fps; phones get 20 to save battery.
 const frameMs = () => 1000 / (window.matchMedia('(pointer: coarse)').matches ? 20 : 30);
 const TILT = 0.36; // camera looks down by about 21 degrees at the top of the page
-// Scrolling the hero away lifts the camera like a drone (to about 56 degrees) and spins the tower faster.
-const TILT_SCROLLED = 0.98;
+// Scrolling the hero away lifts the camera like a drone, to nearly top-down (about 82 degrees), and spins the tower
+// faster.
+const TILT_SCROLLED = 1.43;
 const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
@@ -434,7 +435,7 @@ export function HeroBuilding() {
       // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
       angle += spin;
       spin *= 0.88;
-      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.9)));
+      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.7)));
       tilt += (TILT + (TILT_SCROLLED - TILT) * progress - tilt) * 0.18;
       last = time;
       render();
