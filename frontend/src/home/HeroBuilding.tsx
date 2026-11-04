@@ -21,6 +21,10 @@ const TILT = 0.36; // camera looks down by about 21 degrees at the top of the pa
 const TILT_SCROLLED = 1.56;
 const TILT_SCROLL_SCREENS = 0.4;
 const TILT_EASE_POWER = 6;
+// Narrow layouts (the building sits under the buttons, home.css max-width 1080px): an even turn, the same for every
+// pixel scrolled, over a longer distance, since the building is only partly on screen at first.
+const narrowLayout = () => window.matchMedia('(max-width: 1080px)');
+const TILT_SCROLL_SCREENS_NARROW = 0.6;
 const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
@@ -408,6 +412,7 @@ export function HeroBuilding() {
     let height = 0;
     let angle = -0.5;
     let tilt = TILT;
+    const narrowQuery = narrowLayout();
     let spin = 0; // extra turning speed from scrolling, decays each frame
     let lastScroll = window.scrollY;
     let frame = 0;
@@ -438,8 +443,11 @@ export function HeroBuilding() {
       // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
       angle += spin;
       spin *= 0.88;
-      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * TILT_SCROLL_SCREENS)));
-      const eased = 1 - Math.pow(1 - progress, TILT_EASE_POWER); // front-loaded: the first scrolls turn it the most
+      const narrow = narrowQuery.matches;
+      const distance = window.innerHeight * (narrow ? TILT_SCROLL_SCREENS_NARROW : TILT_SCROLL_SCREENS);
+      const progress = Math.min(1, Math.max(0, window.scrollY / distance));
+      // Wide: front-loaded, the first scrolls turn it the most. Narrow: even.
+      const eased = narrow ? progress : 1 - Math.pow(1 - progress, TILT_EASE_POWER);
       tilt += (TILT + (TILT_SCROLLED - TILT) * eased - tilt) * 0.6;
       last = time;
       render();
