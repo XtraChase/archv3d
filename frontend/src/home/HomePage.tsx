@@ -8,8 +8,10 @@ import { ArrowIcon, ExternalIcon, PlayIcon } from './icons';
 import { HeroBuilding } from './HeroBuilding';
 import { DesignToReality } from './DesignToReality';
 import { Services } from './Services';
+import { useScrollReveal } from './reveal';
 
 export function HomePage({ availability, onContact }: { availability: Availability; onContact: (services?: string[]) => void }) {
+  useScrollReveal();
   return (
     <>
       <Hero />
