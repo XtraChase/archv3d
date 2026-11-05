@@ -534,10 +534,12 @@
     "cover": "portfolio/oregon-trail-substance-designer/cover.webp",
     "media": [
       {
-        "width": 1200,
-        "height": 627,
-        "type": "image",
-        "src": "portfolio/oregon-trail-substance-designer/01.webp"
+        "width": 1920,
+        "height": 1080,
+        "type": "video",
+        "src": "portfolio/oregon-trail-substance-designer/clip.mp4",
+        "audio": true,
+        "poster": "portfolio/oregon-trail-substance-designer/01.webp"
       }
     ]
   },
@@ -558,6 +560,14 @@
     ],
     "cover": "portfolio/dieselpunk-short-film/cover.webp",
     "media": [
+      {
+        "width": 1920,
+        "height": 1080,
+        "type": "video",
+        "src": "portfolio/dieselpunk-short-film/clip.mp4",
+        "audio": true,
+        "poster": "portfolio/dieselpunk-short-film/poster.webp"
+      },
       {
         "width": 1920,
         "height": 845,
@@ -587,10 +597,12 @@
     "cover": "portfolio/getting-a-ship-to-fly/cover.webp",
     "media": [
       {
-        "width": 1200,
-        "height": 627,
-        "type": "image",
-        "src": "portfolio/getting-a-ship-to-fly/01.webp"
+        "width": 1920,
+        "height": 1080,
+        "type": "video",
+        "src": "portfolio/getting-a-ship-to-fly/clip.mp4",
+        "audio": true,
+        "poster": "portfolio/getting-a-ship-to-fly/01.webp"
       }
     ]
   }
