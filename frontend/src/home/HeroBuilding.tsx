@@ -15,16 +15,17 @@ const SECONDS_PER_TURN = 40;
 // A slow turn needs no more than 30 fps; phones get 20 to save battery.
 const frameMs = () => 1000 / (window.matchMedia('(pointer: coarse)').matches ? 20 : 30);
 const TILT = 0.36; // camera looks down by about 21 degrees at the top of the page
-// Scrolling the hero away lifts the camera like a drone, to straight down onto the roof (about 89 degrees), with most
-// of the turn in the very first scrolls (a steep ease-out: half the turn in the first ~10% of the distance), and spins
-// the tower faster.
-const TILT_SCROLLED = 1.56;
-const TILT_SCROLL_SCREENS = 0.4;
-const TILT_EASE_POWER = 6;
-// Narrow layouts (the building sits under the buttons, home.css max-width 1080px): a gentler, even turn, the same for
-// every pixel scrolled, over a longer distance, and half the scroll spin (touch swipes cover a lot of ground).
+// Scrolling spins the tower faster (see SPIN_PER_PIXEL).
+// Top-down camera on scroll: switched off for now (the camera stays at TILT). To bring it back, uncomment these
+// settings and the tilt lines in tick(). It lifted the camera like a drone to straight down onto the roof (about 89
+// degrees): front-loaded on wide layouts, even and gentler on narrow ones.
+// const TILT_SCROLLED = 1.56;
+// const TILT_SCROLL_SCREENS = 0.4;
+// const TILT_EASE_POWER = 6;
+// const TILT_SCROLL_SCREENS_NARROW = 1.2;
+// Narrow layouts (the building sits under the buttons, home.css max-width 1080px) get half the scroll spin: touch
+// swipes cover a lot of ground.
 const narrowLayout = () => window.matchMedia('(max-width: 1080px)');
-const TILT_SCROLL_SCREENS_NARROW = 1.2;
 const SPIN_NARROW_FACTOR = 0.5;
 const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
@@ -444,12 +445,13 @@ export function HeroBuilding() {
       // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
       angle += spin;
       spin *= 0.88;
-      const narrow = narrowQuery.matches;
-      const distance = window.innerHeight * (narrow ? TILT_SCROLL_SCREENS_NARROW : TILT_SCROLL_SCREENS);
-      const progress = Math.min(1, Math.max(0, window.scrollY / distance));
-      // Wide: front-loaded, the first scrolls turn it the most. Narrow: even.
-      const eased = narrow ? progress : 1 - Math.pow(1 - progress, TILT_EASE_POWER);
-      tilt += (TILT + (TILT_SCROLLED - TILT) * eased - tilt) * 0.6;
+      // Top-down camera on scroll, switched off for now (see TILT_SCROLLED above):
+      // const narrow = narrowQuery.matches;
+      // const distance = window.innerHeight * (narrow ? TILT_SCROLL_SCREENS_NARROW : TILT_SCROLL_SCREENS);
+      // const progress = Math.min(1, Math.max(0, window.scrollY / distance));
+      // // Wide: front-loaded, the first scrolls turn it the most. Narrow: even.
+      // const eased = narrow ? progress : 1 - Math.pow(1 - progress, TILT_EASE_POWER);
+      // tilt += (TILT + (TILT_SCROLLED - TILT) * eased - tilt) * 0.6;
       last = time;
       render();
     };
