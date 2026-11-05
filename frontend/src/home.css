@@ -863,8 +863,8 @@ a.experience-card:hover .experience-action svg { transform: translateX(4px); }
   .hero-lede { animation-name: hero-lede-out; animation-range: 0 26vh; }
   .hero-actions { animation-name: hero-lede-out; animation-range: 0 32vh; }
   /* The building zooms in as the hero scrolls away (--building-zoom: how far; finishes while it's still on screen). */
-  .hero-visual { --building-zoom: 2.3; animation-name: hero-visual-out; animation-range: 0 70vh; }
-  @media (max-width: 1080px) { .hero-visual { --building-zoom: 1.7; } }
+  .hero-visual { --building-zoom: 2; animation-name: hero-visual-out; animation-range: 0 70vh; }
+  @media (max-width: 1080px) { .hero-visual { --building-zoom: 1.5; } }
   .hero::before { animation-name: hero-grid-in; animation-range: 0 100vh; }
   @keyframes hero-kicker-out { to { opacity: 0; translate: 0 -160px; letter-spacing: 0.6em; } }
   @keyframes hero-title-out { to { opacity: 0; translate: -16vw -40px; } }
