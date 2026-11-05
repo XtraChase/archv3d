@@ -511,5 +511,87 @@
         "src": "portfolio/forever-reaching-out/04.webp"
       }
     ]
+  },
+  {
+    "slug": "oregon-trail-substance-designer",
+    "title": "Creating The Oregon Trail With Substance Designer",
+    "published": "2023-04-19",
+    "description": [
+      "Using Substance Designer to craft \"The Oregon Trail\" for the upcoming game \"Undead Frontier.\" I then converted the height map into a mesh with the Unreal Engine modeling tools. I plan to use parts of the node graph, including the footprints, wagon trails and horseshoe prints, in various materials found throughout the game."
+    ],
+    "categories": [
+      "Games and Real-Time 3D Environment Art",
+      "Technical Art"
+    ],
+    "software": [
+      "Substance 3D Designer",
+      "Unreal Engine"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Real-time"
+    ],
+    "cover": "portfolio/oregon-trail-substance-designer/cover.webp",
+    "media": [
+      {
+        "width": 1200,
+        "height": 627,
+        "type": "image",
+        "src": "portfolio/oregon-trail-substance-designer/01.webp"
+      }
+    ]
+  },
+  {
+    "slug": "dieselpunk-short-film",
+    "title": "Dieselpunk Short Film",
+    "published": "2023-02-23",
+    "description": [
+      "A dieselpunk short film set in Watson City: a brick alley of exposed pipes, steam, a fuel sign and the Ace Motel."
+    ],
+    "categories": [
+      "Games and Real-Time 3D Environment Art"
+    ],
+    "software": [],
+    "mediums": [
+      "Digital 3D",
+      "Animation"
+    ],
+    "cover": "portfolio/dieselpunk-short-film/cover.webp",
+    "media": [
+      {
+        "width": 1920,
+        "height": 845,
+        "type": "image",
+        "src": "portfolio/dieselpunk-short-film/01.webp"
+      }
+    ]
+  },
+  {
+    "slug": "getting-a-ship-to-fly",
+    "title": "Getting A Ship To Fly",
+    "published": "2023-02-19",
+    "description": [
+      "Using Unreal Engine's Blueprints and some Niagara effects, I got this kitbashed ship to fly."
+    ],
+    "categories": [
+      "Games and Real-Time 3D Environment Art",
+      "Technical Art"
+    ],
+    "software": [
+      "Unreal Engine"
+    ],
+    "mediums": [
+      "Digital 3D",
+      "Real-time"
+    ],
+    "cover": "portfolio/getting-a-ship-to-fly/cover.webp",
+    "media": [
+      {
+        "width": 1200,
+        "height": 627,
+        "type": "image",
+        "src": "portfolio/getting-a-ship-to-fly/01.webp"
+      }
+    ]
   }
 ]

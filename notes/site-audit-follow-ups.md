@@ -135,3 +135,12 @@ again so the zip carries the new config and images.
   `curl -I https://archv3d.com/levels/studio.webp`.
 - After deploying, check that `curl -I https://archv3d.com/` shows the new security headers and no
   `Access-Control-Allow-Origin`.
+
+## Added from the ArtStation blog (2026-11-05)
+Three blog posts became portfolio pages: Creating The Oregon Trail With Substance Designer, Dieselpunk Short Film and
+Getting A Ship To Fly. Each blog post is a video clip, and ArtStation blocks automated downloads, so the pages show the
+still from the clip's thumbnail (1200×627 for two of them, so their covers are soft when stretched wide). To finish them:
+- Send the three clips (ideally with sound). They go in `frontend/public/portfolio/<slug>/` as `01-v1.mp4` and become the
+  first `media` entry (`type: "video"`, `poster` pointing at the existing `01.webp`).
+- Send sharper stills if you have them, so `cover-1600.webp` can be added.
+- Dieselpunk Short Film has no text or tool list on ArtStation; add what you used and the story.
