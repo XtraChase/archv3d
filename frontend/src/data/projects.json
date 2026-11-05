@@ -517,7 +517,7 @@
     "title": "Creating The Oregon Trail With Substance Designer",
     "published": "2023-04-19",
     "description": [
-      "Using Substance Designer to craft \"The Oregon Trail\" for the upcoming game \"Undead Frontier.\" I then converted the height map into a mesh with the Unreal Engine modeling tools. I plan to use parts of the node graph, including the footprints, wagon trails and horseshoe prints, in various materials found throughout the game."
+      "A hand-built Oregon Trail ground surface, made in Substance Designer: wagon ruts, footprints and horseshoe prints pressed into packed earth, with rocks and grass breaking through."
     ],
     "categories": [
       "Games and Real-Time 3D Environment Art",
