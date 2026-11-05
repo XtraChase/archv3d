@@ -141,4 +141,3 @@ Three blog posts became portfolio pages, each with its clip (with sound): Creati
 Designer, Dieselpunk Short Film and Getting A Ship To Fly. Still open:
 - Sharper stills for Oregon Trail and Getting A Ship To Fly (their covers are cut from 1200 px thumbnails, so they look
   soft on the wide card); send them and `cover-1600.webp` can be added.
-- Dieselpunk Short Film has no text or tool list; add what you used and the story.
