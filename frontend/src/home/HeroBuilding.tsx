@@ -15,7 +15,8 @@ const SECONDS_PER_TURN = 40;
 // A slow turn needs no more than 30 fps; phones get 20 to save battery.
 const frameMs = () => 1000 / (window.matchMedia('(pointer: coarse)').matches ? 20 : 30);
 const TILT = 0.36; // camera looks down by about 21 degrees at the top of the page
-// Scrolling spins the tower faster (see SPIN_PER_PIXEL).
+// Scroll spin (scrolling spins the tower faster) is switched off for now: the tower turns at one steady speed. To bring
+// it back, uncomment the SPIN_* settings, `spin`, `lastScroll` and `onScroll` below, and the two spin lines in tick().
 // Top-down camera on scroll: switched off for now (the camera stays at TILT). To bring it back, uncomment these
 // settings and the tilt lines in tick(). It lifted the camera like a drone to straight down onto the roof (about 89
 // degrees): front-loaded on wide layouts, even and gentler on narrow ones.
@@ -25,9 +26,9 @@ const TILT = 0.36; // camera looks down by about 21 degrees at the top of the pa
 // const TILT_SCROLL_SCREENS_NARROW = 1.2;
 // Narrow layouts (the building sits under the buttons, home.css max-width 1080px) get half the scroll spin: touch
 // swipes cover a lot of ground.
-const narrowLayout = () => window.matchMedia('(max-width: 1080px)');
-const SPIN_NARROW_FACTOR = 0.5;
-const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
+// const narrowLayout = () => window.matchMedia('(max-width: 1080px)');
+// const SPIN_NARROW_FACTOR = 0.5;
+// const SPIN_PER_PIXEL = 0.0022; // extra turn per pixel scrolled, eased out
 // Thin lines stay sharp at 1.5x; phones are capped there to keep each frame cheap.
 const pixelRatio = () => Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
 
@@ -414,9 +415,9 @@ export function HeroBuilding() {
     let height = 0;
     let angle = -0.5;
     let tilt = TILT;
-    const narrowQuery = narrowLayout();
-    let spin = 0; // extra turning speed from scrolling, decays each frame
-    let lastScroll = window.scrollY;
+    // const narrowQuery = narrowLayout();
+    // let spin = 0; // extra turning speed from scrolling, decays each frame
+    // let lastScroll = window.scrollY;
     let frame = 0;
     let last = 0;
     let visible = true;
@@ -442,9 +443,10 @@ export function HeroBuilding() {
       frame = requestAnimationFrame(tick);
       if (last && time - last < frameInterval - 4) return; // the tolerance keeps 60 Hz screens at a steady rate
       if (last) angle += ((time - last) / 1000) * ((Math.PI * 2) / SECONDS_PER_TURN);
-      // Scroll response: spin decays, and the camera eases towards the height the scroll position asks for.
-      angle += spin;
-      spin *= 0.88;
+      // Scroll response (switched off): the extra spin from scrolling decays here, and the camera eased towards a
+      // height the scroll position asked for.
+      // angle += spin;
+      // spin *= 0.88;
       // Top-down camera on scroll, switched off for now (see TILT_SCROLLED above):
       // const narrow = narrowQuery.matches;
       // const distance = window.innerHeight * (narrow ? TILT_SCROLL_SCREENS_NARROW : TILT_SCROLL_SCREENS);
@@ -474,12 +476,12 @@ export function HeroBuilding() {
     });
     viewObserver.observe(element);
     document.addEventListener('visibilitychange', update);
-    const onScroll = () => {
-      const y = window.scrollY;
-      spin += (y - lastScroll) * SPIN_PER_PIXEL * 0.12 * (narrowQuery.matches ? SPIN_NARROW_FACTOR : 1);
-      lastScroll = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
+    // const onScroll = () => {
+    //   const y = window.scrollY;
+    //   spin += (y - lastScroll) * SPIN_PER_PIXEL * 0.12 * (narrowQuery.matches ? SPIN_NARROW_FACTOR : 1);
+    //   lastScroll = y;
+    // };
+    // window.addEventListener('scroll', onScroll, { passive: true });
     // Nothing is drawn until the page has loaded and the browser is idle, so the drawing never competes with the page
     // itself; then it fades in (.hero-visual.is-ready) and starts turning.
     let idle = 0;
@@ -505,7 +507,7 @@ export function HeroBuilding() {
       sizeObserver.disconnect();
       viewObserver.disconnect();
       document.removeEventListener('visibilitychange', update);
-      window.removeEventListener('scroll', onScroll);
+      // window.removeEventListener('scroll', onScroll);
     };
   }, []);
 
